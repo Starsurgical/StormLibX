@@ -1,0 +1,8 @@
+;
+; TODO modularize this and generate it instead
+;
+
+LIBRARY StormLibX.dll
+
+EXPORTS
+
