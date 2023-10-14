@@ -1,5 +1,8 @@
-project(StormLibX)
 cmake_minimum_required(VERSION 3.12)
+project(StormLibX)
+
+include(FetchContent)
+find_package(Patch REQUIRED)
 
 ############################################################
 # Options
@@ -10,7 +13,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_SHARED_LIBS "Compile shared libraries" OFF)
-option()
 
 ############################################################
 # Loading StormLib
@@ -18,14 +20,28 @@ option()
 set(STORM_SKIP_INSTALL ON CACHE BOOL "" FORCE)
 set(STORM_USE_BUNDLED_LIBRARIES ON CACHE BOOL "" FORCE)
 
-set(LIBRARY_NAME StormLib PARENT_SCOPE)
-add_subdirectory(libs/StormLib)
+FetchContent_Declare(
+  StormLib
+  GIT_REPOSITORY https://github.com/ladislav-zezula/StormLib.git
+  GIT_TAG v9.25
+  GIT_SHALLOW 1
+  GIT_PROGRESS 1
+  PATCH_COMMAND ${Patch_EXECUTABLE} --ignore-whitespace --verbose -p1 < "${CMAKE_CURRENT_LIST_DIR}/depends/stormlib.patch" || cd .
+)
+
+FetchContent_MakeAvailable(StormLib)
 
 ############################################################
 # Loading squall
 ############################################################
-#add_subdirectory(libs/squall)
+FetchContent_Declare(
+  Squall
+  GIT_REPOSITORY https://github.com/Starsurgical/squall.git
+  GIT_SHALLOW 1
+  GIT_PROGRESS 1
+)
 
+FetchContent_MakeAvailable(Squall)
 
 ############################################################
 # Project Config
@@ -55,6 +71,7 @@ set(SRC_FILES
           src/SUni.cpp
           src/SVid.cpp
           src/Storm.cpp
+          src/DllMain.c
 )
 
 file(GLOB_RECURSE INTERFACE_FILES include/*.h)
@@ -72,7 +89,7 @@ if(WIN32)
     set_target_properties(${THIS_LIBRARY_NAME} PROPERTIES OUTPUT_NAME "StormLibX")
 endif()
 
-target_link_libraries(${THIS_LIBRARY_NAME} PRIVATE StormLib)
+target_link_libraries(${THIS_LIBRARY_NAME} PRIVATE stormlib storm)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source Files" FILES ${SRC_FILES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/include PREFIX "Header Files" FILES ${INTERFACE_FILES})

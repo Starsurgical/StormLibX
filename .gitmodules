@@ -1,6 +1,3 @@
 [submodule "libs/squall"]
 	path = libs/squall
 	url = https://github.com/Starsurgical/squall.git
-[submodule "libs/StormLib"]
-	path = libs/StormLib
-	url = https://github.com/ladislav-zezula/StormLib.git
