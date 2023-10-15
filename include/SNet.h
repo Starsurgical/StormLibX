@@ -1,0 +1,154 @@
+#ifndef __STORMLIBX_SNET_H__
+#define __STORMLIBX_SNET_H__
+
+#include "StormTypes.h"
+
+typedef struct _SNETCAPS {
+  DWORD size;
+  DWORD flags;
+  DWORD maxmessagesize;
+  DWORD maxqueuesize;
+  DWORD maxplayers;
+  DWORD bytessec;
+  DWORD latencyms;
+  DWORD defaultturnssec;
+  DWORD defaultturnsintransit;
+} SNETCAPS, * SNETCAPSPTR;
+
+typedef struct _SNETCREATEDATA {
+  DWORD size;
+  DWORD providerid;
+  DWORD maxplayers;
+  DWORD createflags;
+} SNETCREATEDATA, * SNETCREATEDATAPTR;
+
+typedef struct _SNET_DATA_SYSCOLORTABLE {
+  DWORD    syscolor;
+  COLORREF rgb;
+} SNET_DATA_SYSCOLORTABLE, * SNET_DATA_SYSCOLORTABLEPTR;
+
+typedef struct _SNETEVENT {
+  DWORD  eventid;
+  DWORD  playerid;
+  LPVOID data;
+  DWORD  databytes;
+} SNETEVENT, * SNETEVENTPTR;
+
+typedef struct _SNETGAME {
+  DWORD  size;
+  DWORD  id;
+  LPCSTR gamename;
+  LPCSTR gamedescription;
+  DWORD  categorybits;
+  DWORD  numplayers;
+  DWORD  maxplayers;
+} SNETGAME, * SNETGAMEPTR;
+
+struct _SNETPROGRAMDATA;
+struct _SNETPLAYERDATA;
+struct _SNETUIDATA;
+struct _SNETVERSIONDATA;
+
+typedef BOOL(STORMAPI* SNETABORTPROC)();
+typedef void (STORMAPI* SNETADDCATEGORYPROC)(LPCSTR, DWORD, DWORD);
+typedef void (STORMAPI* SNETCATEGORYLISTPROC)(_SNETPLAYERDATA*, SNETADDCATEGORYPROC);
+typedef BOOL(STORMAPI* SNETCATEGORYPROC)(BOOL, _SNETPROGRAMDATA*, _SNETPLAYERDATA*, _SNETUIDATA*, _SNETVERSIONDATA*, DWORD*, DWORD*);
+typedef BOOL(STORMAPI* SNETCHECKAUTHPROC)(DWORD, LPCSTR, LPCSTR, DWORD, LPCSTR, LPSTR, DWORD);
+typedef BOOL(STORMAPI* SNETCREATEPROC)(SNETCREATEDATAPTR, _SNETPROGRAMDATA*, _SNETPLAYERDATA*, _SNETUIDATA*, _SNETVERSIONDATA*, DWORD*);
+typedef BOOL(STORMAPI* SNETDRAWDESCPROC)(DWORD, DWORD, LPCSTR, LPCSTR, DWORD, DWORD, DWORD, LPDRAWITEMSTRUCT);
+typedef BOOL(STORMAPI* SNETENUMDEVICESPROC)(DWORD, LPCSTR, LPCSTR);
+typedef BOOL(STORMAPI* SNETENUMGAMESEXPROC)(SNETGAMEPTR);
+typedef BOOL(STORMAPI* SNETENUMPROVIDERSPROC)(DWORD, LPCSTR, LPCSTR, SNETCAPSPTR);
+typedef void (STORMAPI* SNETEVENTPROC)(SNETEVENTPTR);
+typedef BOOL(STORMAPI* SNETGETARTPROC)(DWORD, DWORD, LPPALETTEENTRY, LPBYTE, DWORD, int*, int*, int*);
+typedef BOOL(STORMAPI* SNETGETDATAPROC)(DWORD, DWORD, LPVOID, DWORD, DWORD*);
+typedef int (STORMAPI* SNETMESSAGEBOXPROC)(HWND, LPCSTR, LPCSTR, UINT);
+typedef BOOL(STORMAPI* SNETPLAYSOUNDPROC)(DWORD, DWORD, DWORD);
+typedef BOOL(STORMAPI* SNETSELECTEDPROC)(DWORD, SNETCAPSPTR, _SNETUIDATA*, _SNETVERSIONDATA*);
+typedef BOOL(STORMAPI* SNETSTATUSPROC)(LPCSTR, DWORD, DWORD, DWORD, SNETABORTPROC);
+typedef BOOL(STORMAPI* SNETPROFILEPROC)();
+typedef BOOL(STORMAPI* SNETNEWACCOUNTPROC)();
+
+typedef struct _SNETPLAYERDATA {
+  DWORD size;
+  LPCSTR playername;
+  LPCSTR playerdescription;
+  LPCSTR displayedfields;
+} SNETPLAYERDATA, * SNETPLAYERDATAPTR;
+
+typedef struct _SNETPROGRAMDATA {
+  DWORD  size;
+  LPCSTR programname;
+  LPCSTR programdescription;
+  DWORD  programid;
+  DWORD  versionid;
+  DWORD  reserved1;
+  DWORD  maxplayers;
+  LPVOID initdata;
+  DWORD  initdatabytes;
+  LPVOID reserved2;
+  DWORD  optcategorybits;
+  LPSTR  cdkey;
+  LPSTR  registereduser;
+  BOOL   spawned;
+  DWORD  lcid;
+} SNETPROGRAMDATA, * SNETPROGRAMDATAPTR;
+
+// TODO: identify profilecallback, profilefields, profilebitmapcallback
+typedef struct _SNETUIDATA {
+  DWORD size;
+  DWORD uiflags;
+  HWND parentwindow;
+  SNETGETARTPROC artcallback;
+  SNETCHECKAUTHPROC authcallback;
+  SNETCREATEPROC createcallback;
+  SNETDRAWDESCPROC drawdesccallback;
+  SNETSELECTEDPROC selectedcallback;
+  SNETMESSAGEBOXPROC messageboxcallback;
+  SNETPLAYSOUNDPROC soundcallback;
+  SNETSTATUSPROC statuscallback;
+  SNETGETDATAPROC getdatacallback;
+  SNETCATEGORYPROC categorycallback;
+  SNETCATEGORYLISTPROC categorylistcallback;
+  SNETNEWACCOUNTPROC newaccountcallback;
+  SNETPROFILEPROC profilecallback;
+  void* profilerendercallback; // TODO
+  void* profilesexcallback; // TODO
+  void* templatecallback; // TODO
+  void* sigvalidatecallback; // TODO
+  void* leaguecallback; // TODO
+} SNETUIDATA, * SNETUIDATAPTR;
+
+typedef struct _SNETVERSIONDATA {
+  DWORD size;
+  LPCSTR versionstring;
+  LPCSTR executablefile;
+  LPCSTR originalarchivefile;
+  LPCSTR patcharchivefile;
+} SNETVERSIONDATA, * SNETVERSIONDATAPTR;
+
+#define SNET_EVENT_INITDATA       1
+#define SNET_EVENT_PLAYERJOIN     2
+#define SNET_EVENT_PLAYERLEAVE    3
+#define SNET_EVENT_SERVERMESSAGE  4
+
+#define SNET_EXIT_AUTO_JOINING  0x00000001
+#define SNET_EXIT_AUTO_NEWGAME  0x00000002
+#define SNET_EXIT_AUTO_SHUTDOWN 0x00000003
+#define SNET_EXIT_PLAYERQUIT    0x40000001
+#define SNET_EXIT_PLAYERKILLED  0x40000002
+#define SNET_EXIT_PLAYERWON     0x40000004
+#define SNET_EXIT_GAMEOVER      0x40000005
+#define SNET_EXIT_NOTRESPONDING 0x40000006
+
+#define SNET_CAPS_PAGELOCKEDBUFFERS 0x00000001
+#define SNET_CAPS_BASICINTERFACE    0x00000002
+#define SNET_CAPS_DEBUGONLY         0x10000000
+#define SNET_CAPS_RETAILONLY        0x20000000
+
+#define SNET_UPGRADE_FAILED       -1
+#define SNET_UPGRADE_NOT_NEEDED   0
+#define SNET_UPGRADE_SUCCEEDED    1
+#define SNET_UPGRADING_TERMINATE  2
+
+#endif

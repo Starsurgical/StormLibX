@@ -26,7 +26,7 @@ FetchContent_Declare(
   GIT_TAG v9.25
   GIT_SHALLOW 1
   GIT_PROGRESS 1
-  PATCH_COMMAND ${Patch_EXECUTABLE} --ignore-whitespace --verbose -p1 < "${CMAKE_CURRENT_LIST_DIR}/depends/stormlib.patch" || cd .
+  PATCH_COMMAND python "${CMAKE_CURRENT_LIST_DIR}/depends/replace_all_names.py" && ${Patch_EXECUTABLE} --ignore-whitespace --verbose -p1 < "${CMAKE_CURRENT_LIST_DIR}/depends/stormlib.patch" || cd .
 )
 
 FetchContent_MakeAvailable(StormLib)
@@ -39,6 +39,7 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/Starsurgical/squall.git
   GIT_SHALLOW 1
   GIT_PROGRESS 1
+  PATCH_COMMAND python "${CMAKE_CURRENT_LIST_DIR}/depends/replace_all_names.py"
 )
 
 FetchContent_MakeAvailable(Squall)
@@ -65,7 +66,6 @@ set(SRC_FILES
           src/SNet.cpp
           src/SReg.cpp
           src/SRgn.cpp
-          src/SSig.cpp
           src/SStr.cpp
           src/STrans.cpp
           src/SUni.cpp
@@ -89,7 +89,7 @@ if(WIN32)
     set_target_properties(${THIS_LIBRARY_NAME} PROPERTIES OUTPUT_NAME "StormLibX")
 endif()
 
-target_link_libraries(${THIS_LIBRARY_NAME} PRIVATE stormlib storm)
+target_link_libraries(${THIS_LIBRARY_NAME} PRIVATE stormlib PRIVATE storm)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source Files" FILES ${SRC_FILES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/include PREFIX "Header Files" FILES ${INTERFACE_FILES})
