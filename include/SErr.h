@@ -1,7 +1,6 @@
 #ifndef __STORMLIBX_SERR_H__
 #define __STORMLIBX_SERR_H__
 
-#include <storm/Error.hpp>
 #include "StormTypes.h"
 
 
@@ -49,6 +48,27 @@
 
 
 typedef void(__fastcall* RECEIVEERRORPROC)(LPCSTR, LPCSTR, LPCSTR*, DWORD, DWORD, bool);
+
+
+void SErrSetBlizzardErrorFunction(void* pFn);
+
+// @461
+BOOL STORMAPI SErrDisplayError(DWORD errorcode, LPCTSTR filename, int linenumber, LPCTSTR description, BOOL recoverable, DWORD exitcode);
+
+// @462
+//BOOL STORMAPI SErrGetErrorStr(DWORD errorcode, LPTSTR buffer, DWORD bufferchars);
+
+// @463
+DWORD STORMAPI SErrGetLastError();
+
+// @465
+void STORMAPI SErrSetLastError(DWORD errorcode);
+
+// @468
+void STORMAPI SErrSuppressErrors(BOOL suppress);
+
+// @562
+BOOL __cdecl SErrDisplayErrorFmt(DWORD errorcode, LPCTSTR filename, int linenumber, BOOL recoverable, DWORD exitcode, LPCTSTR format, ...);
 
 
 #endif

@@ -14,6 +14,11 @@ void STORMAPI SStrPack(LPTSTR dest, LPCTSTR source, DWORD destsize) {
   ImplWrapSStrPack(dest, source, destsize);
 }
 
+// @505
+LPTSTR STORMAPI SStrChr(LPTSTR string, CHAR ch, BOOL reversed) {
+  return reversed ? SStrChrR(string, ch) : SStrChrF(string, ch);
+}
+
 // @506
 DWORD STORMAPI SStrLen(LPCTSTR string) {
   return ImplWrapSStrLen(string);
@@ -36,22 +41,22 @@ LPTSTR STORMAPI SStrUpper(LPTSTR string) {
 }
 
 
-// @571
+// @569
 LPTSTR STORMAPI SStrChrF(LPTSTR string, CHAR ch) {
   return ImplWrapSStrChr(string, ch);
 }
 
-// @572
+// @570
 LPTSTR STORMAPI SStrChrR(LPTSTR string, CHAR ch) {
   return ImplWrapSStrChrR(string, ch);
 }
 
-// @573
+// @571
 LPCTSTR STORMAPI SStrChrF(LPCTSTR string, CHAR ch) {
   return ImplWrapSStrChr(string, ch);
 }
 
-// @574
+// @572
 LPCTSTR STORMAPI SStrChrR(LPCTSTR string, CHAR ch) {
   return ImplWrapSStrChrR(string, ch);
 }
@@ -70,7 +75,7 @@ DWORD __cdecl SStrVPrintf(LPSTR dest, DWORD destsize, LPCSTR format, std::va_lis
   return ImplWrapSStrVPrintf(dest, destsize, format, args);
 }
 
-// @587
+// @584, @585
 LPCTSTR STORMAPI SStrStr(LPCTSTR string, LPCTSTR substring) {
   return ImplWrapSStrStr(string, substring);
 }

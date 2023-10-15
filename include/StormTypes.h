@@ -8,6 +8,7 @@
 #include <storm/List.hpp>
 #include <storm/Queue.hpp>
 #include <storm/thread/CCritSect.hpp>
+#include <storm/region/Types.hpp>
 
 typedef int BOOL;
 #define FALSE 0

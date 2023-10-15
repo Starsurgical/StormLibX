@@ -17,6 +17,9 @@ DWORD STORMAPI SStrCopy(LPTSTR dest, LPCTSTR source, DWORD destsize = SSTR_UNBOU
 // @503
 void STORMAPI SStrPack(LPTSTR dest, LPCTSTR source, DWORD destsize = SSTR_UNBOUNDED);
 
+// @505
+LPTSTR STORMAPI SStrChr(LPTSTR string, CHAR ch, BOOL reversed);
+
 // @506
 DWORD STORMAPI SStrLen(LPCTSTR string);
 
@@ -30,16 +33,16 @@ int STORMAPI SStrCmpI(LPCTSTR string1, LPCTSTR string2, DWORD size);
 LPTSTR STORMAPI SStrUpper(LPTSTR string);
 
 
-// @571
+// @569
 LPTSTR STORMAPI SStrChrF(LPTSTR string, CHAR ch);
 
-// @572
+// @570
 LPTSTR STORMAPI SStrChrR(LPTSTR string, CHAR ch);
 
-// @573
+// @571
 LPCTSTR STORMAPI SStrChrF(LPCTSTR string, CHAR ch);
 
-// @574
+// @572
 LPCTSTR STORMAPI SStrChrR(LPCTSTR string, CHAR ch);
 
 // @578
@@ -48,7 +51,7 @@ DWORD __cdecl SStrPrintf(LPSTR dest, DWORD destsize, LPCSTR format, ...);
 // @581
 DWORD __cdecl SStrVPrintf(LPSTR dest, DWORD destsize, LPCSTR format, std::va_list args);
 
-// @587
+// @584, @585
 LPCTSTR STORMAPI SStrStr(LPCTSTR string, LPCTSTR substring);
 
 

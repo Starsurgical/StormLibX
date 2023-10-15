@@ -37,7 +37,7 @@ EXPORTS
   ;SNetSetBasePlayer             @129 NONAME
   ;SNetSetGameMode               @130 NONAME
   ;SNetUnregisterEventHandler    @131 NONAME
-  ;SNetGetOwnerId                @132 NONAME
+  
   ;SNetEnumGamesEx               @133 NONAME
   ;SNetSendServerChatCommand     @134 NONAME
   ;SNetSendDatagram              @135 NONAME
@@ -80,8 +80,8 @@ EXPORTS
 
   ;; SFile                           @
   ;SFileAuthenticateArchive      @251 NONAME
-  ;SFileCloseArchive             @252 NONAME
-  ;SFileCloseFile                @253 NONAME
+  SFileCloseArchive             @252 NONAME
+  SFileCloseFile                @253 NONAME
   ;SFileDdaBegin                 @254 NONAME
   ;SFileDdaBeginEx               @255 NONAME
   ;SFileDdaDestroy               @256 NONAME
@@ -91,29 +91,29 @@ EXPORTS
   ;SFileDdaInitialize            @260 NONAME
   ;SFileDdaSetVolume             @261 NONAME
   ;SFileDestroy                  @262 NONAME
-  ;SFileEnableDirectAccess       @263 NONAME
+  SFileEnableDirectAccess       @263 NONAME
   ;SFileGetFileArchive           @264 NONAME
-  ;SFileGetFileSize              @265 NONAME
-  ;SFileOpenArchive              @266 NONAME
-  ;SFileOpenFile                 @267 NONAME
-  ;SFileOpenFileEx               @268 NONAME
-  ;SFileReadFile                 @269 NONAME
+  SFileGetFileSize              @265 NONAME
+  SFileOpenArchive              @266 NONAME
+  SFileOpenFile                 @267 NONAME
+  SFileOpenFileEx               @268 NONAME
+  SFileReadFile                 @269 NONAME
   ;SFileSetBasePath              @270 NONAME
-  ;SFileSetFilePointer           @271 NONAME
-  ;SFileSetLocale                @272 NONAME
+  SFileSetFilePointer           @271 NONAME
+  SFileSetLocale                @272 NONAME
   ;SFileGetBasePath              @273 NONAME
-  ;SFileSetIoErrorMode           @274 NONAME
-  ;SFileGetArchiveName           @275 NONAME
+  SFileSetIoErrorMode           @274 NONAME
+  SFileGetArchiveName           @275 NONAME
   ;SFileGetFileName              @276 NONAME
   ;SFileGetArchiveInfo           @277 NONAME
-  ;SFileSetPlatform              @278 NONAME
-  ;SFileLoadFile                 @279 NONAME
-  ;SFileUnloadFile               @280 NONAME
-  ;SFileLoadFileEx               @281 NONAME
+  SFileSetPlatform              @278 NONAME
+  SFileLoadFile                 @279 NONAME
+  SFileUnloadFile               @280 NONAME
+  SFileLoadFileEx               @281 NONAME
   ;SFilePrioritizeRequest        @282 NONAME
   ;SFileCancelRequest            @283 NONAME
-  ;SFileSetAsyncBudget           @284 NONAME
-  ;SFileSetDataChunkSize         @285 NONAME
+  SFileSetAsyncBudget           @284 NONAME
+  SFileSetDataChunkSize         @285 NONAME
   ;SFileEnableSeekOptimization   @286 NONAME
   ;SFileReadFileEx               @287 NONAME
   ;SFileFileExists               @288 NONAME
@@ -122,10 +122,10 @@ EXPORTS
   ;SFileReadFile2                @291 NONAME
   ;SFileLoadFile2                @292 NONAME
   ;SFileOpenFileAsArchive        @293 NONAME
-  ;SFileGetLocale                @294 NONAME
-  ;SFileRegisterLoadNotifyProc   @295 NONAME
-  ;SFileGetFileCompressedSize    @296 NONAME
-  ;SFileSet                      @297 NONAME
+  SFileGetLocale                @294 NONAME
+  ;SFileGetBaseDir               @295 NONAME
+  SFileGetSavePath              @296 NONAME
+  SFileSetSavePath              @297 NONAME
   ;SFileAuthenticateArchiveEx    @299 NONAME
   ;SFileOpenPathAsArchive        @300 NONAME
 
@@ -203,11 +203,11 @@ EXPORTS
   ;SGdiGetTextExtent             @393 NONAME
 
   ;; SMem
-  ;SMemAlloc                     @401 NONAME
+  SMemAlloc                     @401 NONAME
   ;SMemDestroy                   @402 NONAME
-  ;SMemFree                      @403 NONAME
+  SMemFree                      @403 NONAME
   ;SMemGetSize                   @404 NONAME
-  ;SMemReAlloc                   @405 NONAME
+  SMemReAlloc                   @405 NONAME
   ;SMemGetAllocated              @406 NONAME
 
   ;; SMsg
@@ -266,16 +266,17 @@ EXPORTS
 
   ;; SErr
   ;SErrDestroy                   @460 NONAME
-  ;SErrDisplayError              @461 NONAME
+  SErrDisplayError              @461 NONAME
   ;SErrGetErrorStr               @462 NONAME
-  ;SErrGetLastError              @463 NONAME
+  SErrGetLastError              @463 NONAME
   ;SErrRegisterMessageSource     @464 NONAME
-  ;SErrSetLastError              @465 NONAME
+  SErrSetLastError              @465 NONAME
   ;SErrReportNamedResourceLeak   @466 NONAME
   ;SErrReportResourceLeak        @467 NONAME
-  ;SErrSuppressErrors            @468 NONAME
+  SErrSuppressErrors            @468 NONAME
   ;SErrRegisterHandler           @469 NONAME
   ;SErrUnregisterHandler         @470 NONAME
+  SErrSetBlizzardErrorFunction
 
   ;; SCmd
   ;SCmdGetBool                   @472 NONAME
@@ -299,25 +300,25 @@ EXPORTS
   ;SMemHeapFree                  @488 NONAME
   ;SMemHeapRealloc               @489 NONAME
   ;SMemHeapSize                  @490 NONAME
-  ;SMemCopy                      @491 NONAME
-  ;SMemFill                      @492 NONAME
-  ;SMemMove                      @493 NONAME
-  ;SMemZero                      @494 NONAME
-  ;SMemCmp                       @495 NONAME
+  SMemCopy                      @491 NONAME
+  SMemFill                      @492 NONAME
+  SMemMove                      @493 NONAME
+  SMemZero                      @494 NONAME
+  SMemCmp                       @495 NONAME
   ;SMemSetDebugFlags             @496 NONAME
   ;SMemDumpState                 @497 NONAME
 
   ;; SStr
-  ;SStrCopy                      @501 NONAME
+  SStrCopy                      @501 NONAME
   ;SStrHash                      @502 NONAME
-  ;SStrPack                      @503 NONAME
+  SStrPack                      @503 NONAME
   ;SStrTokenize                  @504 NONAME
-  ;SStrChr                       @505 NONAME
-  ;SStrLen                       @506 NONAME
+  SStrChr                       @505 NONAME
+  SStrLen                       @506 NONAME
   ;SStrDup                       @507 NONAME
-  ;SStrCmp                       @508 NONAME
-  ;SStrCmpI                      @509 NONAME
-  ;SStrUpper                     @510 NONAME
+  SStrCmp                       @508 NONAME
+  SStrCmpI                      @509 NONAME
+  SStrUpper                     @510 NONAME
 
   ;; SMsg
   ;SMsgBreakHandlerChain         @511 NONAME
@@ -331,24 +332,24 @@ EXPORTS
   ;SMsgUnregisterSysCommand      @519 NONAME
 
   ;; SRgn
-  ;SRgnClear                     @521 NONAME
-  ;SRgnCombineRect               @523 NONAME
-  ;SRgnCreate                    @524 NONAME
-  ;SRgnDelete                    @525 NONAME
+  SRgnClear                     @521 NONAME
+  SRgnCombineRect               @523 NONAME
+  SRgnCreate                    @524 NONAME
+  SRgnDelete                    @525 NONAME
   ;SRgnDestroy                   @526 NONAME
   ;SRgnDuplicate                 @527 NONAME
   ;SRgnGetRectParams             @528 NONAME
   ;SRgnGetRects                  @529 NONAME
-  ;SRgnGetBoundingRect           @530 NONAME
-  ;SRgnIsPointInRegion           @531 NONAME
-  ;SRgnIsRectInRegion            @532 NONAME
+  SRgnGetBoundingRect           @530 NONAME
+  SRgnIsPointInRegion           @531 NONAME
+  SRgnIsRectInRegion            @532 NONAME
   ;SRgnOffset                    @533 NONAME
-  ;SRgnCombineRectf              @534 NONAME
+  SRgnCombineRectf              @534 NONAME
   ;SRgnGetRectParamsf            @535 NONAME
   ;SRgnGetRectsf                 @536 NONAME
-  ;SRgnGetBoundingRectf          @537 NONAME
-  ;SRgnIsPointInRegionf          @538 NONAME
-  ;SRgnIsRectInRegionf           @539 NONAME
+  SRgnGetBoundingRectf          @537 NONAME
+  SRgnIsPointInRegionf          @538 NONAME
+  SRgnIsRectInRegionf           @539 NONAME
   ;SRgnOffsetf                   @540 NONAME
 
   ;; SLog
@@ -362,13 +363,13 @@ EXPORTS
   ;SLogWrite                     @548 NONAME
   ;SLogSetAbsIndent              @549 NONAME
   ;SLogSetIndent                 @550 NONAME
-  ;SCompCompress                 @551 NONAME
-  ;SCompDecompress               @552 NONAME
+  SCompCompress                 @551 NONAME
+  SCompDecompress               @552 NONAME
   ;SLogVWrite                    @553 NONAME
 
   ;; SErr2
   ;SErrCheckDebugSymbolLibrary   @561 NONAME
-  ;SErrDisplayErrorFmt           @562 NONAME
+  SErrDisplayErrorFmt           @562 NONAME
   ;SErrIsDisplayingError         @563 NONAME
   ;SErrPrepareAppFatal           @564 NONAME
   ;SErrSetLogTitleString         @565 NONAME
@@ -386,14 +387,14 @@ EXPORTS
   ;SStrToInt                     @575 NONAME
   ;SStrToUnsigned                @576 NONAME
   ;SStrToInt64                   @577 NONAME
-  ;SStrPrintf                    @578 NONAME
+  SStrPrintf                    @578 NONAME
   ;SStrLower                     @579 NONAME
   ;SStrHash64                    @580 NONAME
-  ;SStrVPrintf                   @581 NONAME
+  SStrVPrintf                   @581 NONAME
   ;SDrawSetClientRect            @582 NONAME
   ;SDrawGetClientRect            @583 NONAME
-  ;SStrStr                       @584 NONAME
-  ;SStrStr                       @585 NONAME
+  SStrStr                       @584 NONAME
+  SStrStr                       @585 NONAME
   ;SStrStrI                      @586 NONAME
   ;SStrStrI                      @587 NONAME
   
