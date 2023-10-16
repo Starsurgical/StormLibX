@@ -90,9 +90,9 @@ EXPORTS
   ;SFileDdaGetVolume             @259 NONAME
   ;SFileDdaInitialize            @260 NONAME
   ;SFileDdaSetVolume             @261 NONAME
-  ;SFileDestroy                  @262 NONAME
+  SFileDestroy                  @262 NONAME
   SFileEnableDirectAccess       @263 NONAME
-  ;SFileGetFileArchive           @264 NONAME
+  SFileGetFileArchive           @264 NONAME
   SFileGetFileSize              @265 NONAME
   SFileOpenArchive              @266 NONAME
   SFileOpenFile                 @267 NONAME
@@ -104,8 +104,8 @@ EXPORTS
   ;SFileGetBasePath              @273 NONAME
   SFileSetIoErrorMode           @274 NONAME
   SFileGetArchiveName           @275 NONAME
-  ;SFileGetFileName              @276 NONAME
-  ;SFileGetArchiveInfo           @277 NONAME
+  SFileGetFileName              @276 NONAME
+  SFileGetArchiveInfo           @277 NONAME
   SFileSetPlatform              @278 NONAME
   SFileLoadFile                 @279 NONAME
   SFileUnloadFile               @280 NONAME
@@ -123,7 +123,7 @@ EXPORTS
   ;SFileLoadFile2                @292 NONAME
   ;SFileOpenFileAsArchive        @293 NONAME
   SFileGetLocale                @294 NONAME
-  ;SFileGetBaseDir               @295 NONAME
+  SFileGetInstancePath          @295 NONAME
   SFileGetSavePath              @296 NONAME
   SFileSetSavePath              @297 NONAME
   ;SFileAuthenticateArchiveEx    @299 NONAME
@@ -267,7 +267,7 @@ EXPORTS
   ;; SErr
   ;SErrDestroy                   @460 NONAME
   SErrDisplayError              @461 NONAME
-  ;SErrGetErrorStr               @462 NONAME
+  SErrGetErrorStr               @462 NONAME
   SErrGetLastError              @463 NONAME
   ;SErrRegisterMessageSource     @464 NONAME
   SErrSetLastError              @465 NONAME

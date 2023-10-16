@@ -6,7 +6,7 @@
 
 // @501
 DWORD STORMAPI SStrCopy(LPTSTR dest, LPCTSTR source, DWORD destsize) {
-  return ImplWrapSStrCopy(dest, source, destsize);
+  return (DWORD)ImplWrapSStrCopy(dest, source, destsize);
 }
 
 // @503
@@ -21,7 +21,7 @@ LPTSTR STORMAPI SStrChr(LPTSTR string, CHAR ch, BOOL reversed) {
 
 // @506
 DWORD STORMAPI SStrLen(LPCTSTR string) {
-  return ImplWrapSStrLen(string);
+  return (DWORD)ImplWrapSStrLen(string);
 }
 
 // @508
@@ -72,7 +72,7 @@ DWORD __cdecl SStrPrintf(LPSTR dest, DWORD destsize, LPCSTR format, ...) {
 
 // @581
 DWORD __cdecl SStrVPrintf(LPSTR dest, DWORD destsize, LPCSTR format, std::va_list args) {
-  return ImplWrapSStrVPrintf(dest, destsize, format, args);
+  return (DWORD)ImplWrapSStrVPrintf(dest, destsize, format, args);
 }
 
 // @584, @585

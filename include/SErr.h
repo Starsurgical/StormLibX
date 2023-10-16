@@ -56,7 +56,7 @@ void SErrSetBlizzardErrorFunction(void* pFn);
 BOOL STORMAPI SErrDisplayError(DWORD errorcode, LPCTSTR filename, int linenumber, LPCTSTR description, BOOL recoverable, DWORD exitcode);
 
 // @462
-//BOOL STORMAPI SErrGetErrorStr(DWORD errorcode, LPTSTR buffer, DWORD bufferchars);
+BOOL STORMAPI SErrGetErrorStr(DWORD errorcode, LPTSTR buffer, DWORD bufferchars);
 
 // @463
 DWORD STORMAPI SErrGetLastError();

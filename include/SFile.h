@@ -52,13 +52,13 @@ BOOL STORMAPI SFileDdaSetVolume(HSFILE handle, LONG volume, LONG pan = 0);
 */
 
 // @262
-//BOOL STORMAPI SFileDestroy();
+BOOL STORMAPI SFileDestroy();
 
 // @263
 BOOL STORMAPI SFileEnableDirectAccess(DWORD flags);
 
 // @264
-//BOOL STORMAPI SFileGetFileArchive(HSFILE file, HSARCHIVE* archive);
+BOOL STORMAPI SFileGetFileArchive(HSFILE file, HSARCHIVE* archive);
 
 // @265
 DWORD STORMAPI SFileGetFileSize(HSFILE handle, LPDWORD filesizehigh = NULL);
@@ -76,7 +76,7 @@ BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, LPCTSTR filename, DWORD f
 BOOL STORMAPI SFileReadFile(HSFILE handle, LPVOID buffer, DWORD bytestoread, LPDWORD bytesread = NULL, LPOVERLAPPED overlapped = NULL);
 
 // @270
-//BOOL STORMAPI SFileSetBasePath(const char* path);
+//BOOL STORMAPI SFileSetBasePath(LPCTSTR path);
 
 // @271
 DWORD SFileSetFilePointer(HSFILE handle, LONG lDistanceToMove, LONG* lDistanceToMoveHigh, DWORD dwMoveMethod);
@@ -94,10 +94,10 @@ BOOL STORMAPI SFileSetIoErrorMode(DWORD errormode, SFILEERRORPROC errorproc = NU
 BOOL STORMAPI SFileGetArchiveName(HSARCHIVE archive, LPTSTR buffer, DWORD bufferchars);
 
 // @276
-//BOOL STORMAPI SFileGetFileName(HSFILE file, LPTSTR buffer, DWORD bufferchars);
+BOOL STORMAPI SFileGetFileName(HSFILE file, LPTSTR buffer, DWORD bufferchars);
 
 // @277
-//BOOL STORMAPI SFileGetArchiveInfo(HSARCHIVE archive, DWORD*, DWORD*);
+BOOL STORMAPI SFileGetArchiveInfo(HSARCHIVE archive, int *priority, BOOL *cdrom);
 
 // @278
 void SFileSetPlatform(BYTE platform);
@@ -151,8 +151,7 @@ void STORMAPI SFileSetDataChunkSize(DWORD chunksize);
 LCID STORMAPI SFileGetLocale();
 
 // @295
-// TODO rename
-//DWORD STORMAPI SFileGetBaseDir(LPSTR dest, DWORD destsize, BOOL includeseparator = FALSE);
+void STORMAPI SFileGetInstancePath(LPSTR dest, DWORD destsize, BOOL includeseparator = FALSE);
 
 // @296
 void STORMAPI SFileGetSavePath(LPSTR dest, DWORD destsize, BOOL includeseparator);

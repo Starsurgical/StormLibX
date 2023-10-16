@@ -31,8 +31,9 @@ BOOL STORMAPI SDrawCaptureScreen(LPCTSTR filename, BOOL usesavepath) {
 // @344
 BOOL STORMAPI SDrawClearSurface(int surfacenumber) {
   SDL_Rect rect{ 0, 0, s_scrwidth, s_scrheight };
-  SDL_FillRect(s_sdl_canvas, &rect, 0);
-  SDL_BlitSurface(s_sdl_canvas, nullptr, s_sdl_surface, nullptr);
+  if (SDL_FillRect(s_sdl_canvas, &rect, 0) != 0) return FALSE;
+  if (SDL_BlitSurface(s_sdl_canvas, nullptr, s_sdl_surface, nullptr) != 0) return FALSE;
+  return TRUE;
 }
 
 // @345
@@ -52,6 +53,7 @@ BOOL STORMAPI SDrawGetScreenSize(int* width, int* height, int* bitdepth) {
   if (width) *width = s_scrwidth;
   if (height) *height = s_scrheight;
   if (bitdepth) *bitdepth = s_bpp;
+  return width || height || bitdepth;
 }
 
 // @350
@@ -112,29 +114,29 @@ int STORMAPI SDrawMessageBox(LPCTSTR text, LPCTSTR title, DWORD flags) {
   std::vector<SDL_MessageBoxButtonData> buttons;
 
   if (flags & MB_OKCANCEL) {
-    buttons.emplace_back(0, 2, "Cancel");
-    buttons.emplace_back(SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "OK");
+    buttons.push_back({ 0, 2, "Cancel" });
+    buttons.push_back({ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "OK" });
   }
   else if (flags & MB_ABORTRETRYIGNORE) {
-    buttons.emplace_back(0, 5, "Ignore");
-    buttons.emplace_back(0, 10, "Retry");
-    buttons.emplace_back(0, 3, "Abort");
+    buttons.push_back({ 0, 5, "Ignore" });
+    buttons.push_back({ 0, 10, "Retry" });
+    buttons.push_back({ 0, 3, "Abort" });
   }
   else if (flags & MB_YESNOCANCEL) {
-    buttons.emplace_back(SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "Cancel");
-    buttons.emplace_back(0, 7, "No");
-    buttons.emplace_back(0, 6, "Yes");
+    buttons.push_back({ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "Cancel" });
+    buttons.push_back({ 0, 7, "No" });
+    buttons.push_back({ 0, 6, "Yes" });
   }
   else if (flags & MB_YESNO) {
-    buttons.emplace_back(0, 7, "No");
-    buttons.emplace_back(0, 6, "Yes");
+    buttons.push_back({ 0, 7, "No" });
+    buttons.push_back({ 0, 6, "Yes" });
   }
   else if (flags & MB_YESNO) {
-    buttons.emplace_back(SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "Cancel");
-    buttons.emplace_back(0, 10, "Retry");
+    buttons.push_back({ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "Cancel" });
+    buttons.push_back({ 0, 10, "Retry" });
   }
   else {
-    buttons.emplace_back(SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "OK");
+    buttons.push_back({ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "OK" });
   }
   
   if ((flags & MB_DEFBUTTON3) && buttons.size() >= 3) {
@@ -151,7 +153,7 @@ int STORMAPI SDrawMessageBox(LPCTSTR text, LPCTSTR title, DWORD flags) {
   msgbox.message = text;
   msgbox.window = s_sdl_window;
   msgbox.buttons = buttons.data();
-  msgbox.numbuttons = buttons.size();
+  msgbox.numbuttons = int(buttons.size());
 
   int result = 0;
   SDL_ShowMessageBox(&msgbox, &result);

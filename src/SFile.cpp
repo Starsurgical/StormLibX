@@ -7,6 +7,8 @@
 #undef SFILE_OPEN_LOCAL_FILE
 
 #include <map>
+#include <SDL.h>
+
 #include "SFile.h"
 #include "SMem.h"
 #include "SStr.h"
@@ -28,6 +30,7 @@ DWORD s_asyncbudget;
 DWORD s_datachunksize;
 char s_savepath[MAX_PATH];
 
+std::map<HSFILE, HSARCHIVE> s_filearchives;
 
 // @252
 BOOL STORMAPI SFileCloseArchive(HSARCHIVE handle) {
@@ -42,13 +45,43 @@ BOOL STORMAPI SFileCloseArchive(HSARCHIVE handle) {
 
 // @253
 BOOL STORMAPI SFileCloseFile(HSFILE handle) {
+  s_filearchives.erase(handle);
   return ImplWrapSFileCloseFile(handle);
+}
+
+// @262
+BOOL STORMAPI SFileDestroy() {
+  BOOL result = TRUE;
+
+  for (auto& [file, archive] : s_filearchives) {
+    if (!ImplWrapSFileCloseFile(file)) result = FALSE;
+  }
+  s_filearchives.clear();
+
+  for (auto& [priority, archive] : s_archivelist) {
+    if (!ImplWrapSFileCloseArchive(archive)) result = FALSE;
+  }
+  s_archivelist.clear();
+
+  return result;
 }
 
 // @263
 BOOL STORMAPI SFileEnableDirectAccess(DWORD flags) {
   s_enabledirect = flags;
   return TRUE;
+}
+
+// @264
+BOOL STORMAPI SFileGetFileArchive(HSFILE file, HSARCHIVE* archive) {
+  if (archive) *archive = nullptr;
+
+  auto& it = s_filearchives.find(file);
+  if (it != s_filearchives.end()) {
+    if (archive) *archive = it->second;
+    return TRUE;
+  }
+  return FALSE;
 }
 
 // @265
@@ -87,11 +120,16 @@ BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, LPCTSTR filename, DWORD f
   // TODO s_platform should be a separate thing in StormLib
 
   if (archivehandle) {
-    return ImplWrapSFileOpenFileEx(archivehandle, filename, dwSearchScope, reinterpret_cast<HANDLE*>(handle));
+    if (ImplWrapSFileOpenFileEx(archivehandle, filename, dwSearchScope, reinterpret_cast<HANDLE*>(handle))) {
+      s_filearchives[*handle] = archivehandle;
+      return TRUE;
+    }
+    return FALSE;
   }
  
   for (auto it = s_archivelist.rbegin(); it != s_archivelist.rend(); ++it) {
     if (ImplWrapSFileOpenFileEx(it->second, filename, dwSearchScope, reinterpret_cast<HANDLE*>(handle))) {
+      s_filearchives[*handle] = archivehandle;
       return TRUE;
     }
   }
@@ -123,6 +161,31 @@ BOOL STORMAPI SFileSetIoErrorMode(DWORD errormode, SFILEERRORPROC errorproc) {
 // @275
 BOOL STORMAPI SFileGetArchiveName(HSARCHIVE archive, LPTSTR buffer, DWORD bufferchars) {
   return SFileGetFileInfo(archive, SFileInfoClass::SFileMpqFileName, buffer, bufferchars, NULL);
+}
+
+// @276
+BOOL STORMAPI SFileGetFileName(HSFILE file, LPTSTR buffer, DWORD bufferchars) {
+  TFileEntry fileentry;
+  if (SFileGetFileInfo(file, SFileInfoClass::SFileInfoFileEntry, &fileentry, sizeof(fileentry), NULL)) {
+    SStrCopy(buffer, fileentry.szFileName, bufferchars);
+    return TRUE;
+  }
+  buffer[0] = '\0';
+  return FALSE;
+}
+
+// @277
+BOOL STORMAPI SFileGetArchiveInfo(HSARCHIVE archive, int* priority, BOOL* cdrom) {
+  if (priority) *priority = 0;
+  if (cdrom) *cdrom = FALSE;
+
+  for (auto& [prio, mpq] : s_archivelist) {
+    if (mpq == archive) {
+      if (priority) *priority = prio;
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
 
 // @278
@@ -192,6 +255,20 @@ LCID STORMAPI SFileGetLocale() {
   return ImplWrapSFileGetLocale();
 }
 
+// @295
+void STORMAPI SFileGetInstancePath(LPSTR dest, DWORD destsize, BOOL includeseparator) {
+  const char* path = SDL_GetBasePath();
+  char tmp[MAX_PATH];
+  SStrCopy(tmp, path, sizeof(tmp));
+
+  char* pEnd = SStrChrR(tmp, '\\');
+  if (pEnd && !includeseparator) {
+    *pEnd = '\0';
+  }
+
+  SStrCopy(dest, tmp, destsize);
+}
+
 // @296
 void STORMAPI SFileGetSavePath(LPSTR dest, DWORD destsize, BOOL includeseparator) {
   int len = SStrPrintf(dest, destsize, "%s", s_savepath);
@@ -203,7 +280,6 @@ void STORMAPI SFileGetSavePath(LPSTR dest, DWORD destsize, BOOL includeseparator
   else if (dest[len - 1] == '\\') {
     dest[len - 1] = '\0';
   }
-
 }
 
 // @297
