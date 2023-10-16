@@ -66,7 +66,7 @@ endif()
 
 include_directories(${THIS_LIBRARY_NAME} ${SDL2_INCLUDE_DIRS})
 
-target_link_libraries(${THIS_LIBRARY_NAME} PUBLIC stormlib PUBLIC storm PUBLIC SDL2::SDL2-static)
+target_link_libraries(${THIS_LIBRARY_NAME} PUBLIC stormlib PUBLIC storm PRIVATE SDL2::SDL2-static PRIVATE tomlplusplus::tomlplusplus)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source Files" FILES ${SRC_FILES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/include PREFIX "Header Files" FILES ${INTERFACE_FILES})

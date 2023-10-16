@@ -223,16 +223,16 @@ EXPORTS
   ;SMsgRegisterSysCommand        @420 NONAME
 
   ;; SReg
-  ;SRegLoadData                  @421 NONAME
-  ;SRegLoadString                @422 NONAME
-  ;SRegLoadValue                 @423 NONAME
-  ;SRegSaveData                  @424 NONAME
-  ;SRegSaveString                @425 NONAME
-  ;SRegSaveValue                 @426 NONAME
-  ;SRegGetBaseKey                @427 NONAME
-  ;SRegDeleteValue               @428 NONAME
-  ;SRegEnumKey                   @429 NONAME
-  ;SRegGetNumSubKeys             @430 NONAME
+  SRegLoadData                  @421 NONAME
+  SRegLoadString                @422 NONAME
+  SRegLoadValue                 @423 NONAME
+  SRegSaveData                  @424 NONAME
+  SRegSaveString                @425 NONAME
+  SRegSaveValue                 @426 NONAME
+  SRegGetBaseKey                @427 NONAME
+  SRegDeleteValue               @428 NONAME
+  SRegEnumKey                   @429 NONAME
+  SRegGetNumSubKeys             @430 NONAME
 
   ;; STrans
   ;STransBlt                     @431 NONAME
