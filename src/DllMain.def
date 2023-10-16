@@ -78,7 +78,7 @@ EXPORTS
   ;SDlgSetBitmapE                @222 NONAME
   ;SDlgSetLocale                 @223 NONAME
 
-  ;; SFile                           @
+  ;; SFile
   ;SFileAuthenticateArchive      @251 NONAME
   SFileCloseArchive             @252 NONAME
   SFileCloseFile                @253 NONAME
@@ -129,7 +129,7 @@ EXPORTS
   ;SFileAuthenticateArchiveEx    @299 NONAME
   ;SFileOpenPathAsArchive        @300 NONAME
 
-  ;; Storm                           @
+  ;; Storm
   ;StormDestroy                  @301 NONAME
   ;StormGetInstance              @302 NONAME
   ;StormGetOption                @303 NONAME
@@ -149,31 +149,31 @@ EXPORTS
   ;SBmpAllocLoadImage            @325 NONAME
   ;SBmpSaveImageEx               @326 NONAME
 
-  ;; SCode                           @
+  ;; SCode
   ;SCodeCompile                  @331 NONAME
   ;SCodeDelete                   @332 NONAME
   ;SCodeDestroy                  @333 NONAME
   ;SCodeExecute                  @334 NONAME
   ;SCodeGetPseudocode            @335 NONAME
 
-  ;; SDraw                           @
+  ;; SDraw
   ;SDrawAutoInitialize           @341 NONAME
-  ;SDrawCaptureScreen            @342 NONAME
-  ;SDrawClearSurface             @343 NONAME
-  ;SDrawDestroy                  @344 NONAME
-  ;SDrawFlipPage                 @345 NONAME
-  ;SDrawGetFrameWindow           @346 NONAME
+  SDrawCaptureScreen            @342 NONAME
+  ;SDrawCaptureScreen2           @343 NONAME
+  SDrawClearSurface             @344 NONAME
+  SDrawDestroy                  @345 NONAME
+  SDrawGetFrameWindow           @346 NONAME
   ;SDrawGetObjects               @347 NONAME
-  ;SDrawGetScreenSize            @348 NONAME
+  SDrawGetScreenSize            @348 NONAME
   ;SDrawGetServiceLevel          @349 NONAME
-  ;SDrawLockSurface              @350 NONAME
-  ;SDrawManualInitialize         @351 NONAME
-  ;SDrawMessageBox               @352 NONAME
+  SDrawLockSurface              @350 NONAME
+  SDrawManualInitialize         @351 NONAME
+  SDrawMessageBox               @352 NONAME
   ;SDrawPostClose                @353 NONAME
   ;SDrawRealizePalette           @354 NONAME
   ;SDrawSelectGdiSurface         @355 NONAME
-  ;SDrawUnlockSurface            @356 NONAME
-  ;SDrawUpdatePalette            @357 NONAME
+  SDrawUnlockSurface            @356 NONAME
+  SDrawUpdatePalette            @357 NONAME
   ;SDrawUpdateScreen             @358 NONAME
   ;SDrawWaitForVerticalBlank     @359 NONAME
 
@@ -378,10 +378,10 @@ EXPORTS
   ;SErrSetLogCallback            @568 NONAME
 
   ;; SStr2
-  ;SStrChrF                      @569 NONAME
-  ;SStrChrR                      @570 NONAME
-  ;SStrChrF                      @571 NONAME
-  ;SStrChrR                      @572 NONAME
+  SStrChrF                      @569 NONAME
+  SStrChrR                      @570 NONAME
+  SStrChrF                      @571 NONAME
+  SStrChrR                      @572 NONAME
   ;SStrToDouble                  @573 NONAME
   ;SStrToFloat                   @574 NONAME
   ;SStrToInt                     @575 NONAME
@@ -395,8 +395,8 @@ EXPORTS
   ;SDrawGetClientRect            @583 NONAME
   SStrStr                       @584 NONAME
   SStrStr                       @585 NONAME
-  ;SStrStrI                      @586 NONAME
-  ;SStrStrI                      @587 NONAME
+  SStrStrI                      @586 NONAME
+  SStrStrI                      @587 NONAME
   
   ;; SBig
   SBigAdd                       @601 NONAME

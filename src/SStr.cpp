@@ -50,7 +50,7 @@ LPTSTR STORMAPI SStrChrF(LPTSTR string, CHAR ch) {
 LPTSTR STORMAPI SStrChrR(LPTSTR string, CHAR ch) {
   return ImplWrapSStrChrR(string, ch);
 }
-
+/*
 // @571
 LPCTSTR STORMAPI SStrChrF(LPCTSTR string, CHAR ch) {
   return ImplWrapSStrChr(string, ch);
@@ -60,7 +60,7 @@ LPCTSTR STORMAPI SStrChrF(LPCTSTR string, CHAR ch) {
 LPCTSTR STORMAPI SStrChrR(LPCTSTR string, CHAR ch) {
   return ImplWrapSStrChrR(string, ch);
 }
-
+*/
 // @578
 DWORD __cdecl SStrPrintf(LPSTR dest, DWORD destsize, LPCSTR format, ...) {
   std::va_list args;
@@ -78,4 +78,9 @@ DWORD __cdecl SStrVPrintf(LPSTR dest, DWORD destsize, LPCSTR format, std::va_lis
 // @584, @585
 LPCTSTR STORMAPI SStrStr(LPCTSTR string, LPCTSTR substring) {
   return ImplWrapSStrStr(string, substring);
+}
+
+// @586, @587
+LPCTSTR STORMAPI SStrStrI(LPCTSTR string, LPCTSTR substring) {
+  return ImplWrapSStrStrI(string, substring);
 }
