@@ -52,4 +52,12 @@ typedef int BOOL;
 #define MB_MISCMASK             0x0000C000L
 #endif
 
+
+#define VALIDATEBEGIN do { int __validate_result = -1
+#define VALIDATE(Condition) __validate_result &= (Condition) ? -1 : 0
+#define VALIDATEANDBLANK(Var) if (Var) *Var = 0; else __validate_result = 0
+#define VALIDATEEND if (!__validate_result) { SErrSetLastError(ERROR_INVALID_PARAMETER); return 0; } \
+                    }while(0)
+
+
 #endif

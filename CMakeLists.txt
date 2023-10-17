@@ -64,9 +64,7 @@ if(WIN32)
     set_target_properties(${THIS_LIBRARY_NAME} PROPERTIES OUTPUT_NAME "StormLibX")
 endif()
 
-include_directories(${THIS_LIBRARY_NAME} ${SDL2_INCLUDE_DIRS})
-
-target_link_libraries(${THIS_LIBRARY_NAME} PUBLIC stormlib PUBLIC storm PRIVATE SDL2::SDL2-static PRIVATE tomlplusplus::tomlplusplus)
+target_link_libraries(${THIS_LIBRARY_NAME} PUBLIC stormlib PUBLIC storm PRIVATE SDL2::SDL2-static PRIVATE tomlplusplus::tomlplusplus PRIVATE SDL2_image)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source Files" FILES ${SRC_FILES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/include PREFIX "Header Files" FILES ${INTERFACE_FILES})

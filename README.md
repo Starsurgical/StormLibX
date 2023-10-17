@@ -9,7 +9,7 @@ The implementations mostly wrap other libraries. Here is the list of supported S
 |------------|----------------------------|---------------------------------------------------------|
 | SBig       | Big Numbers                | [squall](https://github.com/whoahq/squall)              |
 | SBlt       | Surface Blitting           | Not yet implemented                                     |
-| SBmp       | Image reading/writing      | Not yet implemented                                     |
+| SBmp       | Image reading/writing      | [SDL_Image](https://github.com/libsdl-org/SDL_image)    |
 | SCmd       | Command Line               | No plans to implement                                   |
 | SCode      | JIT Rendering Compiler     | Not yet implemented                                     |
 | SDlg       | Dialogs and Popups         | Not yet implemented                                     |
@@ -22,7 +22,7 @@ The implementations mostly wrap other libraries. Here is the list of supported S
 | SMem       | Memory Management          | [squall](https://github.com/whoahq/squall)              |
 | SMsg       | Message Handling           | No plans to implement                                   |
 | SNet       | Networking                 | Not yet implemented                                     |
-| SReg       | Registry/Settings          | Not yet implemented                                     |
+| SReg       | Registry/Settings          | [toml++](https://github.com/marzer/tomlplusplus)        |
 | SRgn       | Regions Library            | [squall](https://github.com/whoahq/squall)              |
 | SSignature | Data Signatures/Validation | No plans to implement                                   |
 | SStr       | String Management          | [squall](https://github.com/whoahq/squall)              |
