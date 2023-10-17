@@ -5,7 +5,7 @@
 #include <StormLib.h>
 #include <cstdarg>
 
-void* s_err_callback;
+RECEIVEERRORPROC s_err_callback;
 
 
 const char* GetStormErrorString(DWORD errorcode) {
@@ -153,7 +153,7 @@ const char* GetStormErrorString(DWORD errorcode) {
   return nullptr;
 }
 
-void SErrSetBlizzardErrorFunction(void* pFn) {
+void SErrSetBlizzardErrorFunction(RECEIVEERRORPROC pFn) {
   s_err_callback = pFn;
 }
 

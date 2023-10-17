@@ -5,5 +5,7 @@
 
 DECLARE_HANDLE(HSTRANS);
 
+extern "C" {
+}
 
 #endif

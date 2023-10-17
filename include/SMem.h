@@ -14,30 +14,31 @@
 #define FREEPTRIFUSED(ptr)  {if (ptr) {SMemFree(ptr,__FILE__,__LINE__,0); (ptr) = NULL;}}
 
 
-// @401
-LPVOID STORMAPI SMemAlloc(DWORD bytes, LPCSTR filename = NULL, int linenumber = 0, DWORD flags = 0);
+extern "C" {
+  // @401
+  LPVOID STORMAPI SMemAlloc(DWORD bytes, LPCSTR filename = NULL, int linenumber = 0, DWORD flags = 0);
 
-// @403
-BOOL STORMAPI SMemFree(LPVOID ptr, LPCSTR filename = NULL, int linenumber = 0, DWORD flags = 0);
+  // @403
+  BOOL STORMAPI SMemFree(LPVOID ptr, LPCSTR filename = NULL, int linenumber = 0, DWORD flags = 0);
 
-// @405
-LPVOID STORMAPI SMemReAlloc(LPVOID ptr, DWORD bytes, LPCSTR filename = NULL, int linenumber = 0, DWORD flags = 0);
+  // @405
+  LPVOID STORMAPI SMemReAlloc(LPVOID ptr, DWORD bytes, LPCSTR filename = NULL, int linenumber = 0, DWORD flags = 0);
 
 
-// @491
-void STORMAPI SMemCopy(void* dest, const void* source, size_t size);
+  // @491
+  void STORMAPI SMemCopy(void* dest, const void* source, size_t size);
 
-// @492
-void STORMAPI SMemFill(void* location, size_t length, BYTE fillWith = 0);
+  // @492
+  void STORMAPI SMemFill(void* location, size_t length, BYTE fillWith = 0);
 
-// @493
-void STORMAPI SMemMove(void* dest, const void* source, size_t size);
+  // @493
+  void STORMAPI SMemMove(void* dest, const void* source, size_t size);
 
-// @494
-void STORMAPI SMemZero(void* location, size_t length);
+  // @494
+  void STORMAPI SMemZero(void* location, size_t length);
 
-// @495
-int STORMAPI SMemCmp(void* location1, void* location2, DWORD size);
-
+  // @495
+  int STORMAPI SMemCmp(void* location1, void* location2, DWORD size);
+}
 
 #endif

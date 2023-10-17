@@ -19,145 +19,147 @@ DECLARE_HANDLE(HSARCHIVE);
 typedef BOOL(STORMAPI* SFILEERRORPROC)(LPCTSTR, DWORD, DWORD);
 
 
-// @252
-BOOL STORMAPI SFileCloseArchive(HSARCHIVE handle);
+extern "C" {
 
-// @253
-BOOL STORMAPI SFileCloseFile(HSFILE handle);
+  // @252
+  BOOL STORMAPI SFileCloseArchive(HSARCHIVE handle);
 
-/*
-// @254
-BOOL STORMAPI SFileDdaBegin(HSFILE handle, DWORD buffersize, DWORD flags);
+  // @253
+  BOOL STORMAPI SFileCloseFile(HSFILE handle);
 
-// @255
-BOOL STORMAPI SFileDdaBeginEx(HSFILE handle, DWORD buffersize, DWORD flags, DWORD offset, LONG volume, LONG pan = 0, LPVOID reserved = NULL);
+  /*
+  // @254
+  BOOL STORMAPI SFileDdaBegin(HSFILE handle, DWORD buffersize, DWORD flags);
 
-// @256
-BOOL STORMAPI SFileDdaDestroy();
+  // @255
+  BOOL STORMAPI SFileDdaBeginEx(HSFILE handle, DWORD buffersize, DWORD flags, DWORD offset, LONG volume, LONG pan = 0, LPVOID reserved = NULL);
 
-// @257
-BOOL STORMAPI SFileDdaEnd(HSFILE handle);
+  // @256
+  BOOL STORMAPI SFileDdaDestroy();
 
-// @258
-BOOL STORMAPI SFileDdaGetPos(HSFILE handle, DWORD* position, DWORD* maxposition);
+  // @257
+  BOOL STORMAPI SFileDdaEnd(HSFILE handle);
 
-// @259
-BOOL STORMAPI SFileDdaGetVolume(HSFILE handle, DWORD*, DWORD*);
+  // @258
+  BOOL STORMAPI SFileDdaGetPos(HSFILE handle, DWORD* position, DWORD* maxposition);
 
-// @260
-BOOL STORMAPI SFileDdaInitialize(void* directsound);
+  // @259
+  BOOL STORMAPI SFileDdaGetVolume(HSFILE handle, DWORD*, DWORD*);
 
-// @261
-BOOL STORMAPI SFileDdaSetVolume(HSFILE handle, LONG volume, LONG pan = 0);
-*/
+  // @260
+  BOOL STORMAPI SFileDdaInitialize(void* directsound);
 
-// @262
-BOOL STORMAPI SFileDestroy();
+  // @261
+  BOOL STORMAPI SFileDdaSetVolume(HSFILE handle, LONG volume, LONG pan = 0);
+  */
 
-// @263
-BOOL STORMAPI SFileEnableDirectAccess(DWORD flags);
+  // @262
+  BOOL STORMAPI SFileDestroy();
 
-// @264
-BOOL STORMAPI SFileGetFileArchive(HSFILE file, HSARCHIVE* archive);
+  // @263
+  BOOL STORMAPI SFileEnableDirectAccess(DWORD flags);
 
-// @265
-DWORD STORMAPI SFileGetFileSize(HSFILE handle, LPDWORD filesizehigh = NULL);
+  // @264
+  BOOL STORMAPI SFileGetFileArchive(HSFILE file, HSARCHIVE* archive);
 
-// @266
-BOOL STORMAPI SFileOpenArchive(LPCTSTR archivename, int priority, DWORD flags, HSARCHIVE* handle);
+  // @265
+  DWORD STORMAPI SFileGetFileSize(HSFILE handle, LPDWORD filesizehigh = NULL);
 
-// @267
-BOOL STORMAPI SFileOpenFile(LPCTSTR filename, HSFILE* handle);
+  // @266
+  BOOL STORMAPI SFileOpenArchive(LPCTSTR archivename, int priority, DWORD flags, HSARCHIVE* handle);
 
-// @268
-BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, LPCTSTR filename, DWORD flags, HSFILE* handle);
+  // @267
+  BOOL STORMAPI SFileOpenFile(LPCTSTR filename, HSFILE* handle);
 
-// @269
-BOOL STORMAPI SFileReadFile(HSFILE handle, LPVOID buffer, DWORD bytestoread, LPDWORD bytesread = NULL, LPOVERLAPPED overlapped = NULL);
+  // @268
+  BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, LPCTSTR filename, DWORD flags, HSFILE* handle);
 
-// @270
-//BOOL STORMAPI SFileSetBasePath(LPCTSTR path);
+  // @269
+  BOOL STORMAPI SFileReadFile(HSFILE handle, LPVOID buffer, DWORD bytestoread, LPDWORD bytesread = NULL, LPOVERLAPPED overlapped = NULL);
 
-// @271
-DWORD SFileSetFilePointer(HSFILE handle, LONG lDistanceToMove, LONG* lDistanceToMoveHigh, DWORD dwMoveMethod);
+  // @270
+  //BOOL STORMAPI SFileSetBasePath(LPCTSTR path);
 
-// @272
-BOOL STORMAPI SFileSetLocale(LCID lcid);
+  // @271
+  DWORD SFileSetFilePointer(HSFILE handle, LONG lDistanceToMove, LONG* lDistanceToMoveHigh, DWORD dwMoveMethod);
 
-// @273
-//BOOL STORMAPI SFileGetBasePath(LPTSTR buffer, DWORD bufferchars);
+  // @272
+  BOOL STORMAPI SFileSetLocale(LCID lcid);
 
-// @274
-BOOL STORMAPI SFileSetIoErrorMode(DWORD errormode, SFILEERRORPROC errorproc = NULL);
+  // @273
+  //BOOL STORMAPI SFileGetBasePath(LPTSTR buffer, DWORD bufferchars);
 
-// @275
-BOOL STORMAPI SFileGetArchiveName(HSARCHIVE archive, LPTSTR buffer, DWORD bufferchars);
+  // @274
+  BOOL STORMAPI SFileSetIoErrorMode(DWORD errormode, SFILEERRORPROC errorproc = NULL);
 
-// @276
-BOOL STORMAPI SFileGetFileName(HSFILE file, LPTSTR buffer, DWORD bufferchars);
+  // @275
+  BOOL STORMAPI SFileGetArchiveName(HSARCHIVE archive, LPTSTR buffer, DWORD bufferchars);
 
-// @277
-BOOL STORMAPI SFileGetArchiveInfo(HSARCHIVE archive, int *priority, BOOL *cdrom);
+  // @276
+  BOOL STORMAPI SFileGetFileName(HSFILE file, LPTSTR buffer, DWORD bufferchars);
 
-// @278
-void SFileSetPlatform(BYTE platform);
+  // @277
+  BOOL STORMAPI SFileGetArchiveInfo(HSARCHIVE archive, int* priority, BOOL* cdrom);
 
-// @279
-BOOL STORMAPI SFileLoadFile(LPCTSTR filename, LPVOID *buffer, DWORD* buffersize, DWORD extrasize, LPOVERLAPPED lpOverlapped);
+  // @278
+  void SFileSetPlatform(BYTE platform);
 
-// @280
-BOOL STORMAPI SFileUnloadFile(LPVOID file);
+  // @279
+  BOOL STORMAPI SFileLoadFile(LPCTSTR filename, LPVOID* buffer, DWORD* buffersize, DWORD extrasize, LPOVERLAPPED lpOverlapped);
 
-// @281
-BOOL STORMAPI SFileLoadFileEx(HSARCHIVE hArchive, LPCTSTR filename, LPVOID* buffer, LPDWORD buffersize, DWORD extrasize, DWORD searchScope, struct _OVERLAPPED* lpOverlapped);
+  // @280
+  BOOL STORMAPI SFileUnloadFile(LPVOID file);
 
-// @282
-//void STORMAPI SFilePrioritizeRequest(int,int);
+  // @281
+  BOOL STORMAPI SFileLoadFileEx(HSARCHIVE hArchive, LPCTSTR filename, LPVOID* buffer, LPDWORD buffersize, DWORD extrasize, DWORD searchScope, struct _OVERLAPPED* lpOverlapped);
 
-// @283
-//void STORMAPI SFileCancelRequest(int);
+  // @282
+  //void STORMAPI SFilePrioritizeRequest(int,int);
 
-// @284
-void STORMAPI SFileSetAsyncBudget(DWORD budget);
+  // @283
+  //void STORMAPI SFileCancelRequest(int);
 
-// @285
-void STORMAPI SFileSetDataChunkSize(DWORD chunksize);
+  // @284
+  void STORMAPI SFileSetAsyncBudget(DWORD budget);
 
-// @286
-//BOOL STORMAPI SFileEnableSeekOptimization();
+  // @285
+  void STORMAPI SFileSetDataChunkSize(DWORD chunksize);
 
-// @287
-//BOOL STORMAPI SFileReadFileEx();
+  // @286
+  //BOOL STORMAPI SFileEnableSeekOptimization();
 
-// @288
-//BOOL STORMAPI SFileFileExists();
+  // @287
+  //BOOL STORMAPI SFileReadFileEx();
 
-// @289
-//BOOL STORMAPI SFileFileExistsEx();
+  // @288
+  //BOOL STORMAPI SFileFileExists();
 
-// @290
-//BOOL STORMAPI SFileReadFileEx2();
+  // @289
+  //BOOL STORMAPI SFileFileExistsEx();
 
-// @291
-//BOOL STORMAPI SFileReadFile2();
+  // @290
+  //BOOL STORMAPI SFileReadFileEx2();
 
-// @292
-//BOOL STORMAPI SFileLoadFile2();
+  // @291
+  //BOOL STORMAPI SFileReadFile2();
 
-// @293
-//BOOL STORMAPI SFileOpenFileAsArchive();
+  // @292
+  //BOOL STORMAPI SFileLoadFile2();
 
-// @294
-LCID STORMAPI SFileGetLocale();
+  // @293
+  //BOOL STORMAPI SFileOpenFileAsArchive();
 
-// @295
-void STORMAPI SFileGetInstancePath(LPSTR dest, DWORD destsize, BOOL includeseparator = FALSE);
+  // @294
+  LCID STORMAPI SFileGetLocale();
 
-// @296
-void STORMAPI SFileGetSavePath(LPSTR dest, DWORD destsize, BOOL includeseparator);
+  // @295
+  void STORMAPI SFileGetInstancePath(LPSTR dest, DWORD destsize, BOOL includeseparator = FALSE);
 
-// @297
-void STORMAPI SFileSetSavePath(LPCTSTR directory);
+  // @296
+  void STORMAPI SFileGetSavePath(LPSTR dest, DWORD destsize, BOOL includeseparator);
 
+  // @297
+  void STORMAPI SFileSetSavePath(LPCTSTR directory);
+}
 
 #endif

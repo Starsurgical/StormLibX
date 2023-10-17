@@ -8,4 +8,7 @@ DECLARE_HANDLE(HSGDIOBJ);
 DECLARE_HANDLE(HSGDIFONT);
 
 
+extern "C" {
+}
+
 #endif

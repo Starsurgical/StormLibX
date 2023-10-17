@@ -28,5 +28,7 @@ typedef struct _SCODEEXECUTEDATA {
 } SCODEEXECUTEDATA, * SCODEEXECUTEDATAPTR;
 
 
+extern "C" {
+}
 
 #endif

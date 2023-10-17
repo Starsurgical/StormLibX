@@ -3,9 +3,18 @@
 
 #include "StormTypes.h"
 
+#ifndef ERROR_GEN_FAILURE
+#define ERROR_GEN_FAILURE 31
+#endif
+
 #ifndef ERROR_INVALID_PARAMETER
 #define ERROR_INVALID_PARAMETER 87
 #endif
+
+#ifndef ERROR_BAD_PROVIDER
+#define ERROR_BAD_PROVIDER 1204
+#endif
+
 
 #define STORM_ERROR_ASSERTION                0x85100000
 #define STORM_ERROR_BAD_ARGUMENT             0x85100065
@@ -50,28 +59,36 @@
 #define SERR_LINECODE_FILE      -4
 
 
+#define VALIDATEBEGIN do { int __validate_result = -1
+#define VALIDATE(Condition) __validate_result &= (Condition) ? -1 : 0
+#define VALIDATEANDBLANK(Var) if (Var) *Var = 0; else __validate_result = 0
+#define VALIDATEEND if (!__validate_result) { SErrSetLastError(ERROR_INVALID_PARAMETER); return 0; } \
+                    }while(0)
+
+
 typedef void(__fastcall* RECEIVEERRORPROC)(LPCSTR, LPCSTR, LPCSTR*, DWORD, DWORD, bool);
 
+extern "C" {
 
-void SErrSetBlizzardErrorFunction(void* pFn);
+  void SErrSetBlizzardErrorFunction(RECEIVEERRORPROC pFn);
 
-// @461
-BOOL STORMAPI SErrDisplayError(DWORD errorcode, LPCTSTR filename, int linenumber, LPCTSTR description, BOOL recoverable, DWORD exitcode);
+  // @461
+  BOOL STORMAPI SErrDisplayError(DWORD errorcode, LPCTSTR filename, int linenumber, LPCTSTR description, BOOL recoverable, DWORD exitcode);
 
-// @462
-BOOL STORMAPI SErrGetErrorStr(DWORD errorcode, LPTSTR buffer, DWORD bufferchars);
+  // @462
+  BOOL STORMAPI SErrGetErrorStr(DWORD errorcode, LPTSTR buffer, DWORD bufferchars);
 
-// @463
-DWORD STORMAPI SErrGetLastError();
+  // @463
+  DWORD STORMAPI SErrGetLastError();
 
-// @465
-void STORMAPI SErrSetLastError(DWORD errorcode);
+  // @465
+  void STORMAPI SErrSetLastError(DWORD errorcode);
 
-// @468
-void STORMAPI SErrSuppressErrors(BOOL suppress);
+  // @468
+  void STORMAPI SErrSuppressErrors(BOOL suppress);
 
-// @562
-BOOL __cdecl SErrDisplayErrorFmt(DWORD errorcode, LPCTSTR filename, int linenumber, BOOL recoverable, DWORD exitcode, LPCTSTR format, ...);
-
+  // @562
+  BOOL __cdecl SErrDisplayErrorFmt(DWORD errorcode, LPCTSTR filename, int linenumber, BOOL recoverable, DWORD exitcode, LPCTSTR format, ...);
+}
 
 #endif

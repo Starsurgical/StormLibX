@@ -27,4 +27,14 @@
 #include "SUni.h"
 #include "SVid.h"
 
+extern "C" {
+  void StormInitialize();
+
+  // @301
+  void StormDestroy();
+
+  // @302
+  HINSTANCE StormGetInstance();
+}
+
 #endif

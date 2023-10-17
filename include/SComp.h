@@ -3,10 +3,12 @@
 
 #include "StormTypes.h"
 
-// @551
-BOOL STORMAPI SCompCompress(void* dest, int* destsize, void* source, int sourcesize, unsigned compressiontypes, int hint, int optimization);
+extern "C" {
+  // @551
+  BOOL STORMAPI SCompCompress(void* dest, int* destsize, void* source, int sourcesize, unsigned compressiontypes, int hint, int optimization);
 
-// @552
-BOOL STORMAPI SCompDecompress(void* dest, int* destsize, void* source, int sourcesize);
+  // @552
+  BOOL STORMAPI SCompDecompress(void* dest, int* destsize, void* source, int sourcesize);
+}
 
 #endif

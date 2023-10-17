@@ -11,13 +11,26 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+extern "C" {
+  void StormInitialize();
+  void StormDestroy();
+}
+
+extern HINSTANCE s_instance;
+
 //-----------------------------------------------------------------------------
 // DllMain
 
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 {
-    UNREFERENCED_PARAMETER(hInst);
-    UNREFERENCED_PARAMETER(dwReason);
-    UNREFERENCED_PARAMETER(lpReserved);
-    return TRUE;
+  UNREFERENCED_PARAMETER(lpReserved);
+  UNREFERENCED_PARAMETER(hInst);
+  if (dwReason == DLL_PROCESS_ATTACH) {
+    s_instance = hInst;
+    StormInitialize();
+  }
+  else if (dwReason == DLL_PROCESS_DETACH) {
+    StormDestroy();
+  }
+  return TRUE;
 }

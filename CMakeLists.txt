@@ -46,7 +46,7 @@ set(SRC_FILES
           src/SUni.cpp
           src/SVid.cpp
           src/Storm.cpp
-          src/DllMain.c
+          src/DllMain.cpp
 )
 
 file(GLOB_RECURSE INTERFACE_FILES include/*.h)
@@ -54,9 +54,7 @@ file(GLOB_RECURSE INTERFACE_FILES include/*.h)
 if(MSVC)
     # This file is used to create a DLL on windows
     # Use BUILD_SHARED_LIBS to create StormLib.dll
-    set(STORM_DEF_FILES
-           src/DllMain.def
-    )
+    set(STORM_DEF_FILES src/DllMain.def)
 endif()
 
 add_library(${THIS_LIBRARY_NAME} ${LIB_TYPE} ${SRC_FILES} ${STORM_DEF_FILES} ${INTERFACE_FILES})

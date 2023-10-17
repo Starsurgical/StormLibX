@@ -10,35 +10,37 @@
 #define SREG_FLAG_OVERRIDEPATH  0x00000010
 #define SREG_FLAG_MULTISZ       0x00000080
 
+extern "C" {
 
-// @421
-BOOL STORMAPI SRegLoadData(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPVOID buffer, DWORD buffersize, DWORD* bytesread);
+  // @421
+  BOOL STORMAPI SRegLoadData(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPVOID buffer, DWORD buffersize, DWORD* bytesread);
 
-// @422
-BOOL STORMAPI SRegLoadString(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPTSTR buffer, DWORD bufferchars);
+  // @422
+  BOOL STORMAPI SRegLoadString(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPTSTR buffer, DWORD bufferchars);
 
-// @423
-BOOL STORMAPI SRegLoadValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, DWORD* value);
+  // @423
+  BOOL STORMAPI SRegLoadValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, DWORD* value);
 
-// @424
-BOOL STORMAPI SRegSaveData(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPVOID data, DWORD databytes);
+  // @424
+  BOOL STORMAPI SRegSaveData(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPVOID data, DWORD databytes);
 
-// @425
-BOOL STORMAPI SRegSaveString(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPCTSTR string);
+  // @425
+  BOOL STORMAPI SRegSaveString(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPCTSTR string);
 
-// @426
-BOOL STORMAPI SRegSaveValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, DWORD value);
+  // @426
+  BOOL STORMAPI SRegSaveValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, DWORD value);
 
-// @427
-BOOL STORMAPI SRegGetBaseKey(DWORD flags, LPTSTR buffer, DWORD buffersize);
+  // @427
+  BOOL STORMAPI SRegGetBaseKey(DWORD flags, LPTSTR buffer, DWORD buffersize);
 
-// @428
-BOOL STORMAPI SRegDeleteValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags);
+  // @428
+  BOOL STORMAPI SRegDeleteValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags);
 
-// @429
-BOOL STORMAPI SRegEnumKey(LPCTSTR keyname, DWORD flags, DWORD index, LPTSTR buffer, DWORD bufferchars);
+  // @429
+  BOOL STORMAPI SRegEnumKey(LPCTSTR keyname, DWORD flags, DWORD index, LPTSTR buffer, DWORD bufferchars);
 
-// @430
-BOOL STORMAPI SRegGetNumSubKeys(LPCTSTR keyname, DWORD flags, DWORD* subkeys);
+  // @430
+  BOOL STORMAPI SRegGetNumSubKeys(LPCTSTR keyname, DWORD flags, DWORD* subkeys);
+}
 
 #endif
