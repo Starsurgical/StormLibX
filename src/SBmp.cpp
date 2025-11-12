@@ -63,7 +63,7 @@ BOOL STORMAPI SBmpDecodeImage(DWORD imagetype, LPBYTE imagedata, DWORD imagebyte
 }
 
 // @323
-BOOL STORMAPI SBmpLoadImage(LPCTSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, DWORD buffersize, int* width, int* height, int* bitdepth) {
+BOOL STORMAPI SBmpLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, DWORD buffersize, int* width, int* height, int* bitdepth) {
   if (width) *width = 0;
   if (height) *height = 0;
   if (bitdepth) *bitdepth = 0;
@@ -89,12 +89,12 @@ BOOL STORMAPI SBmpLoadImage(LPCTSTR filename, LPPALETTEENTRY paletteentries, LPB
 }
 
 // @324
-BOOL STORMAPI SBmpSaveImage(LPCTSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth) {
+BOOL STORMAPI SBmpSaveImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth) {
   return SBmpSaveImageEx(filename, paletteentries, bitmapbits, width, height, bitdepth, 0);
 }
 
 // @325
-BOOL STORMAPI SBmpAllocLoadImage(LPCTSTR filename, LPPALETTEENTRY paletteentries, LPBYTE* returnedbuffer, int* width, int* height, int* bitdepth, int requestedbitdepth, SBMPALLOCPROC allocproc) {
+BOOL STORMAPI SBmpAllocLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE* returnedbuffer, int* width, int* height, int* bitdepth, int requestedbitdepth, SBMPALLOCPROC allocproc) {
   if (returnedbuffer) *returnedbuffer = nullptr;
   if (width) *width = 0;
   if (height) *height = 0;
@@ -125,7 +125,7 @@ BOOL STORMAPI SBmpAllocLoadImage(LPCTSTR filename, LPPALETTEENTRY paletteentries
 }
 
 // @326
-BOOL STORMAPI SBmpSaveImageEx(LPCTSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth, int alignment) {
+BOOL STORMAPI SBmpSaveImageEx(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth, int alignment) {
   if (bitdepth != 8 && bitdepth != 24 && bitdepth != 32) {
     return FALSE;
   }

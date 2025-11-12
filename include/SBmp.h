@@ -16,16 +16,16 @@ extern "C" {
   BOOL STORMAPI SBmpDecodeImage(DWORD imagetype, LPBYTE imagedata, DWORD imagebytes, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, DWORD buffersize, int* width = NULL, int* height = NULL, int* bitdepth = NULL);
 
   // @323
-  BOOL STORMAPI SBmpLoadImage(LPCTSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, DWORD buffersize, int* width = NULL, int* height = NULL, int* bitdepth = NULL);
+  BOOL STORMAPI SBmpLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, DWORD buffersize, int* width = NULL, int* height = NULL, int* bitdepth = NULL);
 
   // @324
-  BOOL STORMAPI SBmpSaveImage(LPCTSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth);
+  BOOL STORMAPI SBmpSaveImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth);
 
   // @325
-  BOOL STORMAPI SBmpAllocLoadImage(LPCTSTR filename, LPPALETTEENTRY paletteentries, LPBYTE* returnedbuffer, int* width = NULL, int* height = NULL, int* bitdepth = NULL, int requestedbitdepth = 0, SBMPALLOCPROC allocproc = NULL);
+  BOOL STORMAPI SBmpAllocLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE* returnedbuffer, int* width = NULL, int* height = NULL, int* bitdepth = NULL, int requestedbitdepth = 0, SBMPALLOCPROC allocproc = NULL);
 
   // @326
-  BOOL STORMAPI SBmpSaveImageEx(LPCTSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth, int alignment);
+  BOOL STORMAPI SBmpSaveImageEx(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth, int alignment);
 
   // @327
   BOOL STORMAPI SBmpRealignImage(LPBYTE imagedata, DWORD imagebytes, int width, int height, int alignment, DWORD* out_newwidth);

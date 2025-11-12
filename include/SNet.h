@@ -273,10 +273,10 @@ typedef struct _SNETSPI {
   BOOL(STORMAPI* spiGetLocalPlayerName)(LPCSTR namebuffer, DWORD namechars, LPCSTR descbuffer, DWORD descchars);
   void* spiReportGameResult;
   void* spiCheckDataFile;
-  BOOL (STORMAPI* spiLeagueCommand)(LPCTSTR cmd, SNETLEAGUECMDRESULTPROC callback);
+  BOOL (STORMAPI* spiLeagueCommand)(LPCSTR cmd, SNETLEAGUECMDRESULTPROC callback);
   void* spiLeagueSendReplayPath;
   void* spiLeagueGetReplayPath;
-  BOOL(STORMAPI* spiLeagueLogout)(LPCTSTR bnetname);
+  BOOL(STORMAPI* spiLeagueLogout)(LPCSTR bnetname);
   BOOL(STORMAPI* spiLeagueGetName)(LPSTR leaguebuffer, DWORD leaguechars);
 } SNETSPI, *SNETSPIPTR;
 

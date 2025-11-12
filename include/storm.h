@@ -4,7 +4,14 @@
 
 #include "StormTypes.h"
 
-#include "SBig.h"
+#include <Storm/Big.hpp>
+#include <Storm/Core.hpp>
+#include <Storm/Error.hpp>
+#include <Storm/Event.hpp>
+#include <Storm/Memory.hpp>
+#include <Storm/Region.hpp>
+#include <Storm/String.hpp>
+
 #include "SBlt.h"
 #include "SBmp.h"
 #include "SCmd.h"
@@ -12,17 +19,12 @@
 #include "SComp.h"
 #include "SDlg.h"
 #include "SDraw.h"
-#include "SErr.h"
-#include "SEvt.h"
 #include "SFile.h"
 #include "SGdi.h"
 #include "SLog.h"
-#include "SMem.h"
 #include "SMsg.h"
 #include "SNet.h"
 #include "SReg.h"
-#include "SRgn.h"
-#include "SStr.h"
 #include "STrans.h"
 #include "SUni.h"
 #include "SVid.h"
@@ -31,7 +33,7 @@ extern "C" {
   void StormInitialize();
 
   // @301
-  void StormDestroy();
+  void StormDestroyWrapped();
 
   // @302
   HINSTANCE StormGetInstance();

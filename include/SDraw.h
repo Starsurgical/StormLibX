@@ -27,7 +27,7 @@ extern "C" {
   BOOL STORMAPI SDrawManualInitialize(HWND framewindow, void* directdraw, void* frontbuffer, void* backbuffer, void* systembuffer, void* temporarybuffer);
 
   // @352
-  int STORMAPI SDrawMessageBox(LPCTSTR text, LPCTSTR title, DWORD flags);
+  int STORMAPI SDrawMessageBox(LPCSTR text, LPCSTR title, DWORD flags);
 
   // @356
   BOOL STORMAPI SDrawUnlockSurface(int surfacenumber, LPBYTE ptr, DWORD numrects = 0, LPCRECT rectarray = NULL);

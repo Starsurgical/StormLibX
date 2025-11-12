@@ -16,7 +16,7 @@ DECLARE_HANDLE(HSARCHIVE);
 #define SFILE_OPEN_RELATIVE 2
 #define SFILE_OPEN_CHECK_EXISTS 4
 
-typedef BOOL(STORMAPI* SFILEERRORPROC)(LPCTSTR, DWORD, DWORD);
+typedef BOOL(STORMAPI* SFILEERRORPROC)(LPCSTR, DWORD, DWORD);
 
 
 extern "C" {
@@ -66,19 +66,19 @@ extern "C" {
   DWORD STORMAPI SFileGetFileSize(HSFILE handle, LPDWORD filesizehigh = NULL);
 
   // @266
-  BOOL STORMAPI SFileOpenArchive(LPCTSTR archivename, int priority, DWORD flags, HSARCHIVE* handle);
+  BOOL STORMAPI SFileOpenArchive(LPCSTR archivename, int priority, DWORD flags, HSARCHIVE* handle);
 
   // @267
-  BOOL STORMAPI SFileOpenFile(LPCTSTR filename, HSFILE* handle);
+  BOOL STORMAPI SFileOpenFile(LPCSTR filename, HSFILE* handle);
 
   // @268
-  BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, LPCTSTR filename, DWORD flags, HSFILE* handle);
+  BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, LPCSTR filename, DWORD flags, HSFILE* handle);
 
   // @269
   BOOL STORMAPI SFileReadFile(HSFILE handle, LPVOID buffer, DWORD bytestoread, LPDWORD bytesread = NULL, LPOVERLAPPED overlapped = NULL);
 
   // @270
-  //BOOL STORMAPI SFileSetBasePath(LPCTSTR path);
+  //BOOL STORMAPI SFileSetBasePath(LPCSTR path);
 
   // @271
   DWORD SFileSetFilePointer(HSFILE handle, LONG lDistanceToMove, LONG* lDistanceToMoveHigh, DWORD dwMoveMethod);
@@ -87,16 +87,16 @@ extern "C" {
   BOOL STORMAPI SFileSetLocale(LCID lcid);
 
   // @273
-  //BOOL STORMAPI SFileGetBasePath(LPTSTR buffer, DWORD bufferchars);
+  //BOOL STORMAPI SFileGetBasePath(LPSTR buffer, DWORD bufferchars);
 
   // @274
   BOOL STORMAPI SFileSetIoErrorMode(DWORD errormode, SFILEERRORPROC errorproc = NULL);
 
   // @275
-  BOOL STORMAPI SFileGetArchiveName(HSARCHIVE archive, LPTSTR buffer, DWORD bufferchars);
+  BOOL STORMAPI SFileGetArchiveName(HSARCHIVE archive, LPSTR buffer, DWORD bufferchars);
 
   // @276
-  BOOL STORMAPI SFileGetFileName(HSFILE file, LPTSTR buffer, DWORD bufferchars);
+  BOOL STORMAPI SFileGetFileName(HSFILE file, LPSTR buffer, DWORD bufferchars);
 
   // @277
   BOOL STORMAPI SFileGetArchiveInfo(HSARCHIVE archive, int* priority, BOOL* cdrom);
@@ -105,13 +105,13 @@ extern "C" {
   void SFileSetPlatform(BYTE platform);
 
   // @279
-  BOOL STORMAPI SFileLoadFile(LPCTSTR filename, LPVOID* buffer, DWORD* buffersize, DWORD extrasize, LPOVERLAPPED lpOverlapped);
+  BOOL STORMAPI SFileLoadFile(LPCSTR filename, LPVOID* buffer, DWORD* buffersize, DWORD extrasize, LPOVERLAPPED lpOverlapped);
 
   // @280
   BOOL STORMAPI SFileUnloadFile(LPVOID file);
 
   // @281
-  BOOL STORMAPI SFileLoadFileEx(HSARCHIVE hArchive, LPCTSTR filename, LPVOID* buffer, LPDWORD buffersize, DWORD extrasize, DWORD searchScope, struct _OVERLAPPED* lpOverlapped);
+  BOOL STORMAPI SFileLoadFileEx(HSARCHIVE hArchive, LPCSTR filename, LPVOID* buffer, LPDWORD buffersize, DWORD extrasize, DWORD searchScope, struct _OVERLAPPED* lpOverlapped);
 
   // @282
   //void STORMAPI SFilePrioritizeRequest(int,int);
@@ -159,7 +159,7 @@ extern "C" {
   void STORMAPI SFileGetSavePath(LPSTR dest, DWORD destsize, BOOL includeseparator);
 
   // @297
-  void STORMAPI SFileSetSavePath(LPCTSTR directory);
+  void STORMAPI SFileSetSavePath(LPCSTR directory);
 }
 
 #endif

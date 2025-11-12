@@ -1,5 +1,5 @@
 #include "SReg.h"
-#include "SStr.h"
+#include <storm/String.hpp>
 
 #include <toml++/toml.hpp>
 #include <string>
@@ -39,7 +39,7 @@ namespace {
 }
 
 // @421
-BOOL STORMAPI SRegLoadData(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPVOID buffer, DWORD buffersize, DWORD* bytesread) {
+BOOL STORMAPI SRegLoadData(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPVOID buffer, DWORD buffersize, DWORD* bytesread) {
   auto& settings = GetTomlSettings(flags);
 
   if (!keyname || !valuename) return FALSE;
@@ -62,7 +62,7 @@ BOOL STORMAPI SRegLoadData(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPVO
 
       if (pBuffer) {
         if (read >= buffersize) return FALSE;
-
+        
         SStrCopy(&pBuffer[read], elemstr.c_str(), buffersize - read);
       }
       read += static_cast<DWORD>(elemstr.size()) + 1;
@@ -86,7 +86,7 @@ BOOL STORMAPI SRegLoadData(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPVO
 }
 
 // @422
-BOOL STORMAPI SRegLoadString(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPTSTR buffer, DWORD bufferchars) {
+BOOL STORMAPI SRegLoadString(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPSTR buffer, DWORD bufferchars) {
   auto& settings = GetTomlSettings(flags);
 
   if (!keyname || !valuename || !buffer || bufferchars == 0) return FALSE;
@@ -108,7 +108,7 @@ BOOL STORMAPI SRegLoadString(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LP
 }
 
 // @423
-BOOL STORMAPI SRegLoadValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, DWORD* value) {
+BOOL STORMAPI SRegLoadValue(LPCSTR keyname, LPCSTR valuename, DWORD flags, DWORD* value) {
   auto& settings = GetTomlSettings(flags);
 
   if (!keyname || !valuename || !value) return FALSE;
@@ -127,7 +127,7 @@ BOOL STORMAPI SRegLoadValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, DWO
 }
 
 // @424
-BOOL STORMAPI SRegSaveData(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPVOID data, DWORD databytes) {
+BOOL STORMAPI SRegSaveData(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPVOID data, DWORD databytes) {
   auto& settings = GetTomlSettings(flags);
 
   toml::table tbl = GetOrCreateTable(settings[keyname]);
@@ -161,7 +161,7 @@ BOOL STORMAPI SRegSaveData(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPVO
 }
 
 // @425
-BOOL STORMAPI SRegSaveString(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LPCTSTR string) {
+BOOL STORMAPI SRegSaveString(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPCSTR string) {
   auto& settings = GetTomlSettings(flags);
 
   toml::table tbl = GetOrCreateTable(settings[keyname]);
@@ -173,7 +173,7 @@ BOOL STORMAPI SRegSaveString(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, LP
 }
 
 // @426
-BOOL STORMAPI SRegSaveValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, DWORD value) {
+BOOL STORMAPI SRegSaveValue(LPCSTR keyname, LPCSTR valuename, DWORD flags, DWORD value) {
   auto& settings = GetTomlSettings(flags);
 
   toml::table tbl = GetOrCreateTable(settings[keyname]);
@@ -185,7 +185,7 @@ BOOL STORMAPI SRegSaveValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags, DWO
 }
 
 // @427
-BOOL STORMAPI SRegGetBaseKey(DWORD flags, LPTSTR buffer, DWORD buffersize) {
+BOOL STORMAPI SRegGetBaseKey(DWORD flags, LPSTR buffer, DWORD buffersize) {
   if (buffer == nullptr || buffersize == 0) return FALSE;
 
   SStrCopy(buffer, SRegGetBaseKeyInternal(flags), buffersize);
@@ -193,7 +193,7 @@ BOOL STORMAPI SRegGetBaseKey(DWORD flags, LPTSTR buffer, DWORD buffersize) {
 }
 
 // @428
-BOOL STORMAPI SRegDeleteValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags) {
+BOOL STORMAPI SRegDeleteValue(LPCSTR keyname, LPCSTR valuename, DWORD flags) {
   auto& settings = GetTomlSettings(flags);
 
   toml::table tbl = GetOrCreateTable(settings[keyname]);
@@ -205,7 +205,7 @@ BOOL STORMAPI SRegDeleteValue(LPCTSTR keyname, LPCTSTR valuename, DWORD flags) {
 }
 
 // @429
-BOOL STORMAPI SRegEnumKey(LPCTSTR keyname, DWORD flags, DWORD index, LPTSTR buffer, DWORD bufferchars) {
+BOOL STORMAPI SRegEnumKey(LPCSTR keyname, DWORD flags, DWORD index, LPSTR buffer, DWORD bufferchars) {
   auto& settings = GetTomlSettings(flags);
   
   toml::table tbl = GetOrCreateTable(settings[keyname]);
@@ -221,7 +221,7 @@ BOOL STORMAPI SRegEnumKey(LPCTSTR keyname, DWORD flags, DWORD index, LPTSTR buff
 }
 
 // @430
-BOOL STORMAPI SRegGetNumSubKeys(LPCTSTR keyname, DWORD flags, DWORD* subkeys) {
+BOOL STORMAPI SRegGetNumSubKeys(LPCSTR keyname, DWORD flags, DWORD* subkeys) {
   auto& settings = GetTomlSettings(flags);
   
   toml::table tbl = GetOrCreateTable(settings[keyname]);

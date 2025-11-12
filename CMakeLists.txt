@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.17)
 project(StormLibX)
 
 include(FetchContent)
@@ -19,11 +19,21 @@ option(BUILD_SHARED_LIBS "Compile shared libraries" OFF)
 ############################################################
 add_subdirectory("depends")
 
+if(DEFINED squall_SOURCE_DIR)
+    list(APPEND CMAKE_MODULE_PATH
+        "${squall_SOURCE_DIR}/lib/system/cmake"
+        "${squall_SOURCE_DIR}/vendor/cmake-modules"
+    )
+
+    include(system) # defines WHOA_SYSTEM_WIN
+else()
+    message(FATAL_ERROR "Squall source directory not defined. Cannot include system.cmake")
+endif()
+
 ############################################################
 # Project Config
 ############################################################
 set(SRC_FILES
-          src/SBig.cpp
           src/SBlt.cpp
           src/SBmp.cpp
           src/SCmd.cpp
@@ -31,17 +41,12 @@ set(SRC_FILES
           src/SComp.cpp
           src/SDlg.cpp
           src/SDraw.cpp
-          src/SErr.cpp
-          src/SEvt.cpp
           src/SFile.cpp
           src/SGdi.cpp
           src/SLog.cpp
-          src/SMem.cpp
           src/SMsg.cpp
           src/SNet.cpp
           src/SReg.cpp
-          src/SRgn.cpp
-          src/SStr.cpp
           src/STrans.cpp
           src/SUni.cpp
           src/SVid.cpp
@@ -68,4 +73,4 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source Files" FILES ${
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/include PREFIX "Header Files" FILES ${INTERFACE_FILES})
 
 target_include_directories(${THIS_LIBRARY_NAME} PUBLIC include/)
-
+target_compile_definitions(StormLibX PRIVATE WHOA_STORM_FLAVOR=SC1)

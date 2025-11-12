@@ -109,7 +109,7 @@ BOOL STORMAPI SDrawManualInitialize(HWND framewindow, void* directdraw, void* fr
 }
 
 // @352
-int STORMAPI SDrawMessageBox(LPCTSTR text, LPCTSTR title, DWORD flags) {
+int STORMAPI SDrawMessageBox(LPCSTR text, LPCSTR title, DWORD flags) {
   SDL_MessageBoxData msgbox = {};
   std::vector<SDL_MessageBoxButtonData> buttons;
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.17)
 
 set(STORM_SKIP_INSTALL ON CACHE BOOL "" FORCE)
 set(STORM_USE_BUNDLED_LIBRARIES ON CACHE BOOL "" FORCE)

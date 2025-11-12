@@ -13,7 +13,7 @@
 
 extern "C" {
   void StormInitialize();
-  void StormDestroy();
+  void StormDestroyWrapped();
 }
 
 extern HINSTANCE s_instance;
@@ -30,7 +30,7 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
     StormInitialize();
   }
   else if (dwReason == DLL_PROCESS_DETACH) {
-    StormDestroy();
+    StormDestroyWrapped();
   }
   return TRUE;
 }

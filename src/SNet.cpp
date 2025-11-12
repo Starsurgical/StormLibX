@@ -1,6 +1,6 @@
-#include "SNet.h"
+#include <storm/Memory.hpp>
 #include "SErr.h"
-#include "SMem.h"
+#include "SNet.h"
 #include "SDraw.h"
 
 #include <SDL.h>
@@ -119,7 +119,8 @@ BOOL STORMAPI SNetEnumDevices(SNETENUMDEVICESPROC callback) {
     }
 
     for (SNETSPI_DEVICELISTPTR p = listptr; p; p = p->next) {
-      SNETSPI_DEVICELIST& listcopy = local_device_list.emplace_back(*p);
+      local_device_list.emplace_back(*p);
+      SNETSPI_DEVICELIST& listcopy = local_device_list.back();
       if (p->next) {
         listcopy.next = &listcopy + 1;
       }
@@ -274,7 +275,7 @@ BOOL STORMAPI SNetReportGameResult(unsigned firstplayerid, int arraysize, int* r
 }
 
 // @141
-BOOL STORMAPI SNetSendLeagueCommand(LPCTSTR cmd, SNETLEAGUECMDRESULTPROC callback) {
+BOOL STORMAPI SNetSendLeagueCommand(LPCSTR cmd, SNETLEAGUECMDRESULTPROC callback) {
   VALIDATEBEGIN;
   VALIDATE(cmd);
   VALIDATEEND;

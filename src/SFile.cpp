@@ -11,7 +11,7 @@
 
 #include "SFile.h"
 #include "SMem.h"
-#include "SStr.h"
+#include <storm/String.hpp>
 
 
 #define SLIB_FILE_OPEN_FROM_MPQ     0x00000000
@@ -90,7 +90,7 @@ DWORD STORMAPI SFileGetFileSize(HSFILE handle, LPDWORD filesizehigh) {
 }
 
 // @266
-BOOL STORMAPI SFileOpenArchive(LPCTSTR archivename, int priority, DWORD flags, HSARCHIVE* handle) {
+BOOL STORMAPI SFileOpenArchive(LPCSTR archivename, int priority, DWORD flags, HSARCHIVE* handle) {
   BOOL result = ImplWrapSFileOpenArchive(archivename, priority, flags, reinterpret_cast<HANDLE*>(handle));
   if (handle && *handle) {
     s_archivelist.emplace(priority, *handle);
@@ -99,7 +99,7 @@ BOOL STORMAPI SFileOpenArchive(LPCTSTR archivename, int priority, DWORD flags, H
 }
 
 // @267
-BOOL STORMAPI SFileOpenFile(LPCTSTR filename, HSFILE* handle) {
+BOOL STORMAPI SFileOpenFile(LPCSTR filename, HSFILE* handle) {
   DWORD flags = 0;
   if (s_enabledirect & 1) flags |= SFILE_OPEN_FROM_DISK;
   if (s_enabledirect & 2) flags |= SFILE_OPEN_RELATIVE;
@@ -110,7 +110,7 @@ BOOL STORMAPI SFileOpenFile(LPCTSTR filename, HSFILE* handle) {
 }
 
 // @268
-BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, LPCTSTR filename, DWORD flags, HSFILE* handle) {
+BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, LPCSTR filename, DWORD flags, HSFILE* handle) {
   DWORD dwSearchScope = SLIB_FILE_OPEN_FROM_MPQ;
   if (flags & SFILE_OPEN_FROM_DISK) {
     dwSearchScope = SLIB_FILE_OPEN_LOCAL_FILE;  // ?? maybe
@@ -159,12 +159,12 @@ BOOL STORMAPI SFileSetIoErrorMode(DWORD errormode, SFILEERRORPROC errorproc) {
 }
 
 // @275
-BOOL STORMAPI SFileGetArchiveName(HSARCHIVE archive, LPTSTR buffer, DWORD bufferchars) {
+BOOL STORMAPI SFileGetArchiveName(HSARCHIVE archive, LPSTR buffer, DWORD bufferchars) {
   return SFileGetFileInfo(archive, SFileInfoClass::SFileMpqFileName, buffer, bufferchars, NULL);
 }
 
 // @276
-BOOL STORMAPI SFileGetFileName(HSFILE file, LPTSTR buffer, DWORD bufferchars) {
+BOOL STORMAPI SFileGetFileName(HSFILE file, LPSTR buffer, DWORD bufferchars) {
   TFileEntry fileentry;
   if (SFileGetFileInfo(file, SFileInfoClass::SFileInfoFileEntry, &fileentry, sizeof(fileentry), NULL)) {
     SStrCopy(buffer, fileentry.szFileName, bufferchars);
@@ -194,7 +194,7 @@ void SFileSetPlatform(BYTE platform) {
 }
 
 // @279
-BOOL STORMAPI SFileLoadFile(LPCTSTR filename, LPVOID* buffer, DWORD* buffersize, DWORD extrasize, LPOVERLAPPED lpOverlapped) {
+BOOL STORMAPI SFileLoadFile(LPCSTR filename, LPVOID* buffer, DWORD* buffersize, DWORD extrasize, LPOVERLAPPED lpOverlapped) {
   DWORD flags = 0;
   if (s_enabledirect & 1) flags |= SFILE_OPEN_FROM_DISK;
   if (s_enabledirect & 2) flags |= SFILE_OPEN_RELATIVE;
@@ -214,7 +214,7 @@ BOOL STORMAPI SFileUnloadFile(LPVOID file) {
 }
 
 // @281
-BOOL STORMAPI SFileLoadFileEx(HSARCHIVE hArchive, LPCTSTR filename, LPVOID* buffer, LPDWORD buffersize, DWORD extrasize, DWORD searchScope, struct _OVERLAPPED* lpOverlapped) {
+BOOL STORMAPI SFileLoadFileEx(HSARCHIVE hArchive, LPCSTR filename, LPVOID* buffer, LPDWORD buffersize, DWORD extrasize, DWORD searchScope, struct _OVERLAPPED* lpOverlapped) {
 
   HSFILE hFile;
   if (SFileOpenFileEx(hArchive, filename, searchScope, &hFile)) {
@@ -283,6 +283,6 @@ void STORMAPI SFileGetSavePath(LPSTR dest, DWORD destsize, BOOL includeseparator
 }
 
 // @297
-void STORMAPI SFileSetSavePath(LPCTSTR directory) {
+void STORMAPI SFileSetSavePath(LPCSTR directory) {
   SStrCopy(s_savepath, directory, MAX_PATH);
 }

@@ -130,7 +130,7 @@ EXPORTS
   ;SFileOpenPathAsArchive        @300 NONAME
 
   ;; Storm
-  StormDestroy                  @301 NONAME
+  StormDestroyWrapped           @301 NONAME
   StormGetInstance              @302 NONAME
   ;StormGetOption                @303 NONAME
   ;StormSetOption                @304 NONAME

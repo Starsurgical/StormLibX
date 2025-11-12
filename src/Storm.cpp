@@ -7,21 +7,23 @@ void StormInitialize() {
 }
 
 // @301
-void StormDestroy() {
-  SErrSetBlizzardErrorFunction(nullptr);
+void StormDestroyWrapped() {
+  //SErrSetBlizzardErrorFunction(nullptr);
   //SDlgDestroy();
   //SGdiDestroy();
   //SVidDestroy();
   SDrawDestroy();
-  //SRgnDestroy();
+  //SRgnDestroy();  // in Squall
   //SMsgDestroy();
   SNetDestroy();
-  //SEvtDestroy();
+  //SEvtDestroy();  // in Squall
   //SBltDestroy();
   //SCodeDestroy();
   //SCmdDestroy();
   SFileDestroy();
   //STransDestroy();
+
+  StormDestroy(); // Squall's version
 }
 
 // @302
