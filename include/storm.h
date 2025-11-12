@@ -11,6 +11,7 @@
 #include <Storm/Memory.hpp>
 #include <Storm/Region.hpp>
 #include <Storm/String.hpp>
+#include <Storm/Unicode.hpp>
 
 #include "SBlt.h"
 #include "SBmp.h"
@@ -19,9 +20,11 @@
 #include "SComp.h"
 #include "SDlg.h"
 #include "SDraw.h"
+#include "SErr.h"
 #include "SFile.h"
 #include "SGdi.h"
 #include "SLog.h"
+#include "SMem.h"
 #include "SMsg.h"
 #include "SNet.h"
 #include "SReg.h"

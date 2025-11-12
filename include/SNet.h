@@ -271,13 +271,14 @@ typedef struct _SNETSPI {
   // Called after the game list has been processed and resume updating
   BOOL(STORMAPI* spiUnlockGameList)(SNETSPI_GAMELISTPTR gamelist, DWORD* hintnextcall);
   BOOL(STORMAPI* spiGetLocalPlayerName)(LPCSTR namebuffer, DWORD namechars, LPCSTR descbuffer, DWORD descchars);
-  void* spiReportGameResult;
-  void* spiCheckDataFile;
-  BOOL (STORMAPI* spiLeagueCommand)(LPCSTR cmd, SNETLEAGUECMDRESULTPROC callback);
-  void* spiLeagueSendReplayPath;
-  void* spiLeagueGetReplayPath;
-  BOOL(STORMAPI* spiLeagueLogout)(LPCSTR bnetname);
-  BOOL(STORMAPI* spiLeagueGetName)(LPSTR leaguebuffer, DWORD leaguechars);
+  BOOL(STORMAPI* spiReportGameResult)(DWORD ladderid, DWORD arraysize, LPCSTR *namearray, DWORD *resultarray, LPCSTR textgameresult, LPCSTR textplayerresult);
+  BOOL(STORMAPI* spiCheckDataFile)(LPCSTR filename, const void *data, DWORD bytes, DWORD *extendedresult);
+  BOOL(STORMAPI* spiSendLeagueCommand)(LPCSTR cmd, void* callback);
+  BOOL(STORMAPI* spiSendReplayPath)(LPCSTR replayPath, int, int);
+  BOOL(STORMAPI* spiGetLeagueId)(DWORD *pid);
+  BOOL(STORMAPI* spiLeagueLogout)(LPCSTR bnetName);
+  // Retrieves the player name that last whispered you on battle.net
+  BOOL(STORMAPI* spiGetReplyName)(LPCSTR buffer, DWORD buffersize);
 } SNETSPI, *SNETSPIPTR;
 
 typedef BOOL(STORMAPI* SNETSPIBIND)(DWORD, SNETSPIPTR*);
@@ -390,7 +391,7 @@ extern "C" {
   int STORMAPI SNetLeagueLogout(char* bnetName);
 
   // @146
-  int STORMAPI SNetGetLeaguePlayerName(char* curPlayerLeageName, size_t nameSize);
+  int STORMAPI SNetGetReplyName(char* pszReplyName, size_t nameSize);
 
   // @147
   // Returns 4 byte protocol identifier of current protocol, only used for debugging, can be removed.

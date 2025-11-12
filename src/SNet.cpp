@@ -287,12 +287,12 @@ BOOL STORMAPI SNetSendLeagueCommand(LPCSTR cmd, SNETLEAGUECMDRESULTPROC callback
     return FALSE;
   }
 
-  if (!s_spi || !s_spi->spiLeagueCommand) {
+  if (!s_spi || !s_spi->spiSendLeagueCommand) {
     SErrSetLastError(ERROR_BAD_PROVIDER);
     return FALSE;
   }
 
-  if (!s_spi->spiLeagueCommand(cmd, callback)) {
+  if (!s_spi->spiSendLeagueCommand(cmd, callback)) {
     SErrSetLastError(ERROR_GEN_FAILURE);
     return FALSE;
   }
@@ -336,7 +336,7 @@ int STORMAPI SNetLeagueLogout(char* bnetName) {
 }
 
 // @146
-int STORMAPI SNetGetLeaguePlayerName(char* curPlayerLeageName, size_t nameSize) {
+int STORMAPI SNetGetReplyName(char* pszReplyName, size_t nameSize) {
   return 0;
 }
 

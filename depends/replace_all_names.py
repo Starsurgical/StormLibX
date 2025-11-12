@@ -134,7 +134,7 @@ STORM_NAMES = [
   "SMsgUnregisterKeyDown",
   "SMsgUnregisterKeyUp",
   "SMsgUnregisterMessage",
-  "SMsgGetDispatcher",
+  "SMsgGetGenericWndProc",
   "SMsgSetDefaultWindow",
   "SMsgGetDefaultWindow",
   "SMsgUnregisterSysCommand",

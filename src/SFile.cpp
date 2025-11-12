@@ -256,7 +256,7 @@ LCID STORMAPI SFileGetLocale() {
 }
 
 // @295
-void STORMAPI SFileGetInstancePath(LPSTR dest, DWORD destsize, BOOL includeseparator) {
+void STORMAPI SFileGetInstallPath(LPSTR dest, DWORD destsize, BOOL includeseparator) {
   const char* path = SDL_GetBasePath();
   char tmp[MAX_PATH];
   SStrCopy(tmp, path, sizeof(tmp));
@@ -270,7 +270,7 @@ void STORMAPI SFileGetInstancePath(LPSTR dest, DWORD destsize, BOOL includesepar
 }
 
 // @296
-void STORMAPI SFileGetSavePath(LPSTR dest, DWORD destsize, BOOL includeseparator) {
+void STORMAPI SFileGetUserDataPath(LPSTR dest, DWORD destsize, BOOL includeseparator) {
   int len = SStrPrintf(dest, destsize, "%s", s_savepath);
   if (includeseparator) {
     if (dest[len - 1] != '\\') {
@@ -283,6 +283,6 @@ void STORMAPI SFileGetSavePath(LPSTR dest, DWORD destsize, BOOL includeseparator
 }
 
 // @297
-void STORMAPI SFileSetSavePath(LPCSTR directory) {
+void STORMAPI SFileSetUserDataPath(LPCSTR directory) {
   SStrCopy(s_savepath, directory, MAX_PATH);
 }

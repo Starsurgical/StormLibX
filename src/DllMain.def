@@ -51,7 +51,9 @@ EXPORTS
   ;SNetGetLeagueName             @143 NONAME
   ;SNetGetPlayerNames            @144 NONAME
   ;SNetLeagueLogout              @145 NONAME
-  ;SNetGetLeaguePlayerName       @146 NONAME
+  ;SNetGetReplyName              @146 NONAME
+  ;SNetGetCurrentProviderID      @147 NONAME
+  ;SNetSetCodeSignVerifcationFunction @148
 
   ;; SDlg
   ;SDlgBeginPaint                @201 NONAME
@@ -77,6 +79,13 @@ EXPORTS
   ;SDlgBltToWindowE              @221 NONAME
   ;SDlgSetBitmapE                @222 NONAME
   ;SDlgSetLocale                 @223 NONAME
+  ;SDlgSetMessageLoopThrottle    @224 NONAME
+  ;SDlgClearWindowMap            @225 NONAME
+  ;SDlgResetWindowPos            @226 NONAME
+  ;SDlgAddWindowToMap            @227 NONAME
+  ;SDlgRemoveWindowFromMap       @228 NONAME
+  ;SDlgAdjustWindowsToParent     @229 NONAME
+  ;SDlgTakeScreenshot            @230 NONAME
 
   ;; SFile
   ;SFileAuthenticateArchive      @251 NONAME
@@ -123,9 +132,9 @@ EXPORTS
   ;SFileLoadFile2                @292 NONAME
   ;SFileOpenFileAsArchive        @293 NONAME
   SFileGetLocale                @294 NONAME
-  SFileGetInstancePath          @295 NONAME
-  SFileGetSavePath              @296 NONAME
-  SFileSetSavePath              @297 NONAME
+  SFileGetInstallPath           @295 NONAME
+  SFileGetUserDataPath          @296 NONAME
+  SFileSetUserDataPath          @297 NONAME
   ;SFileAuthenticateArchiveEx    @299 NONAME
   ;SFileOpenPathAsArchive        @300 NONAME
 
@@ -148,8 +157,8 @@ EXPORTS
   SBmpSaveImage                 @324 NONAME
   SBmpAllocLoadImage            @325 NONAME
   SBmpSaveImageEx               @326 NONAME
-  SBmpRealignImage              @327 NONAME
-  SBmpGetAligned                @328 NONAME
+  SBmpPadImage                  @327 NONAME
+  SBmpGetPitchForAlignment      @328 NONAME
 
   ;; SCode
   ;SCodeCompile                  @331 NONAME
@@ -180,14 +189,14 @@ EXPORTS
   ;SDrawWaitForVerticalBlank     @359 NONAME
 
   ;; SEvt
-  ;SEvtDestroy                   @371 NONAME
-  ;SEvtDispatch                  @372 NONAME
-  ;SEvtRegisterHandler           @373 NONAME
-  ;SEvtUnregisterHandler         @374 NONAME
-  ;SEvtUnregisterType            @375 NONAME
-  ;SEvtPopState                  @376 NONAME
-  ;SEvtPushState                 @377 NONAME
-  ;SEvtBreakHandlerChain         @378 NONAME
+  SEvtDestroy                   @371 NONAME
+  SEvtDispatch                  @372 NONAME
+  SEvtRegisterHandler           @373 NONAME
+  SEvtUnregisterHandler         @374 NONAME
+  SEvtUnregisterType            @375 NONAME
+  SEvtPopState                  @376 NONAME
+  SEvtPushState                 @377 NONAME
+  SEvtBreakHandlerChain         @378 NONAME
 
   ;; SGdi
   ;SGdiBitBlt                    @381 NONAME
@@ -269,7 +278,7 @@ EXPORTS
   ;; SErr
   ;SErrDestroy                   @460 NONAME
   SErrDisplayError              @461 NONAME
-  SErrGetErrorStr               @462 NONAME
+  ;SErrGetErrorStr               @462 NONAME
   SErrGetLastError              @463 NONAME
   ;SErrRegisterMessageSource     @464 NONAME
   SErrSetLastError              @465 NONAME
@@ -278,7 +287,7 @@ EXPORTS
   SErrSuppressErrors            @468 NONAME
   ;SErrRegisterHandler           @469 NONAME
   ;SErrUnregisterHandler         @470 NONAME
-  SErrSetBlizzardErrorFunction
+  ;SErrSetBlizzardErrorFunction
 
   ;; SCmd
   ;SCmdGetBool                   @472 NONAME
@@ -312,12 +321,12 @@ EXPORTS
 
   ;; SStr
   SStrCopy                      @501 NONAME
-  ;SStrHash                      @502 NONAME
+  SStrHash                      @502 NONAME
   SStrPack                      @503 NONAME
-  ;SStrTokenize                  @504 NONAME
-  SStrChr                       @505 NONAME
+  SStrTokenize                  @504 NONAME
+  ;SStrChrBidir                 @505 NONAME
   SStrLen                       @506 NONAME
-  ;SStrDup                       @507 NONAME
+  SStrDupA                       @507 NONAME
   SStrCmp                       @508 NONAME
   SStrCmpI                      @509 NONAME
   SStrUpper                     @510 NONAME
@@ -328,7 +337,7 @@ EXPORTS
   ;SMsgUnregisterKeyDown         @513 NONAME
   ;SMsgUnregisterKeyUp           @514 NONAME
   ;SMsgUnregisterMessage         @515 NONAME
-  ;SMsgGetDispatcher             @516 NONAME
+  ;SMsgGetGenericWndProc         @516 NONAME
   ;SMsgSetDefaultWindow          @517 NONAME
   ;SMsgGetDefaultWindow          @518 NONAME
   ;SMsgUnregisterSysCommand      @519 NONAME
@@ -339,20 +348,20 @@ EXPORTS
   SRgnCreate                    @524 NONAME
   SRgnDelete                    @525 NONAME
   ;SRgnDestroy                   @526 NONAME
-  ;SRgnDuplicate                 @527 NONAME
-  ;SRgnGetRectParams             @528 NONAME
-  ;SRgnGetRects                  @529 NONAME
+  SRgnDuplicate                 @527 NONAME
+  SRgnGetRectParams             @528 NONAME
+  SRgnGetRects                  @529 NONAME
   SRgnGetBoundingRect           @530 NONAME
   SRgnIsPointInRegion           @531 NONAME
   SRgnIsRectInRegion            @532 NONAME
-  ;SRgnOffset                    @533 NONAME
+  SRgnOffset                    @533 NONAME
   SRgnCombineRectf              @534 NONAME
-  ;SRgnGetRectParamsf            @535 NONAME
-  ;SRgnGetRectsf                 @536 NONAME
+  SRgnGetRectParamsf            @535 NONAME
+  SRgnGetRectsf                 @536 NONAME
   SRgnGetBoundingRectf          @537 NONAME
   SRgnIsPointInRegionf          @538 NONAME
   SRgnIsRectInRegionf           @539 NONAME
-  ;SRgnOffsetf                   @540 NONAME
+  SRgnOffsetf                   @540 NONAME
 
   ;; SLog
   ;SLogClose                     @541 NONAME
@@ -370,36 +379,37 @@ EXPORTS
   ;SLogVWrite                    @553 NONAME
 
   ;; SErr2
-  ;SErrCheckDebugSymbolLibrary   @561 NONAME
+  SErrDisplayAppFatal           @561 NONAME
   SErrDisplayErrorFmt           @562 NONAME
   ;SErrIsDisplayingError         @563 NONAME
-  ;SErrPrepareAppFatal           @564 NONAME
+  SErrPrepareAppFatal           @564 NONAME
   ;SErrSetLogTitleString         @565 NONAME
-  ;SErrDisplayAppFatal           @566 NONAME
+  ;SErrCheckDebugSymbolLibrary   @566 NONAME
   ;SErrCatchUnhandledExceptions  @567 NONAME
   ;SErrSetLogCallback            @568 NONAME
 
   ;; SStr2
-  SStrChrF                      @569 NONAME
-  SStrChrR                      @570 NONAME
-  SStrChrF                      @571 NONAME
-  SStrChrR                      @572 NONAME
-  ;SStrToDouble                  @573 NONAME
-  ;SStrToFloat                   @574 NONAME
-  ;SStrToInt                     @575 NONAME
-  ;SStrToUnsigned                @576 NONAME
+  ;?SStrChr@@YGPADPADD@Z         @569 NONAME  ; Not offered in SC 1.17
+  ;?SStrChrR@@YGPADPADD@Z        @570 NONAME  ; Not offered in SC 1.17
+  ?SStrChr@@YGPBDPBDD@Z         @571 NONAME
+  ?SStrChrR@@YGPBDPBDD@Z        @572 NONAME
+  SStrToDouble                  @573 NONAME
+  SStrToFloat                   @574 NONAME
+  SStrToInt                     @575 NONAME
+  SStrToUnsigned                @576 NONAME
   ;SStrToInt64                   @577 NONAME
   SStrPrintf                    @578 NONAME
-  ;SStrLower                     @579 NONAME
+  SStrLower                     @579 NONAME
   ;SStrHash64                    @580 NONAME
   SStrVPrintf                   @581 NONAME
-  ;SDrawSetClientRect            @582 NONAME
-  ;SDrawGetClientRect            @583 NONAME
-  SStrStr                       @584 NONAME
-  SStrStr                       @585 NONAME
-  SStrStrI                      @586 NONAME
-  SStrStrI                      @587 NONAME
-  
+  ;SMsgSetDefaultWindowRect      @582 NONAME
+  ;SMsgGetDefaultWindowRect      @583 NONAME
+  ?SStrStr@@YGPADPADPBD@Z       @584 NONAME
+  ?SStrStr@@YGPBDPBD0@Z         @585 NONAME
+  ?SStrStrI@@YGPADPADPBD@Z      @586 NONAME
+  ?SStrStrI@@YGPBDPBD0@Z        @587 NONAME
+  ;SysQueueUserEvent             @588 NONAME
+
   ;; SBig
   SBigAdd                       @601 NONAME
   SBigAnd                       @602 NONAME
@@ -413,13 +423,13 @@ EXPORTS
   SBigFromStr                   @610 NONAME
   ;SBigFromStream                @611 NONAME
   SBigFromUnsigned              @612 NONAME
-  SBigGcd                       @613 NONAME
+  ;SBigGcd                       @613 NONAME
   SBigInc                       @614 NONAME
-  SBigInvMod                    @615 NONAME
+  ;SBigInvMod                    @615 NONAME
   SBigIsEven                    @616 NONAME
   SBigIsOdd                     @617 NONAME
   SBigIsOne                     @618 NONAME
-  SBigIsPrime                   @619 NONAME
+  ;SBigIsPrime                   @619 NONAME
   SBigIsZero                    @620 NONAME
   SBigMod                       @621 NONAME
   SBigMul                       @622 NONAME
@@ -427,10 +437,10 @@ EXPORTS
   SBigNew                       @624 NONAME
   SBigNot                       @625 NONAME
   SBigOr                        @626 NONAME
-  SBigPow                       @627 NONAME
+  ;SBigPow                       @627 NONAME
   SBigPowMod                    @628 NONAME
-  SBigRand                      @629 NONAME
-  SBigSet2Exp                   @630 NONAME
+  ;SBigRand                      @629 NONAME
+  ;SBigSet2Exp                   @630 NONAME
   SBigSetOne                    @631 NONAME
   SBigSetZero                   @632 NONAME
   SBigShl                       @633 NONAME
@@ -441,8 +451,8 @@ EXPORTS
   SBigToBinaryBuffer            @638 NONAME
   ;SBigToBinaryPtr               @639 NONAME
   ;SBigToStrArray                @640 NONAME
-  SBigToStrBuffer               @641 NONAME
-  SBigToStrPtr                  @642 NONAME
+  ;SBigToStrBuffer               @641 NONAME
+  ;SBigToStrPtr                  @642 NONAME
   ;SBigToStreamArray             @643 NONAME
   ;SBigToStreamBuffer            @644 NONAME
   ;SBigToStreamPtr               @645 NONAME
@@ -454,8 +464,8 @@ EXPORTS
   ;SUniConvertUTF16to8           @902 NONAME
   ;SUniConvertUTF8to16Len        @903 NONAME
   ;SUniConvertUTF8to16           @904 NONAME
-  ;SUniSGetUTF8                  @905 NONAME
-  ;SUniSPutUTF8                  @906 NONAME
+  SUniSGetUTF8                  @905 NONAME
+  SUniSPutUTF8                  @906 NONAME
   ;SUniFindAfterUTF8Chr          @907 NONAME
   ;SUniFindUTF8ChrStart          @908 NONAME
   ;SUniConvertUTF16ToWin         @909 NONAME

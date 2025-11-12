@@ -155,10 +155,10 @@ BOOL STORMAPI SBmpSaveImageEx(LPCSTR filename, LPPALETTEENTRY paletteentries, LP
 }
 
 // @327
-BOOL STORMAPI SBmpRealignImage(LPBYTE imagedata, DWORD imagebytes, int width, int height, int alignment, DWORD* out_newwidth) {
+BOOL STORMAPI SBmpPadImage(LPBYTE imagedata, DWORD imagebytes, int width, int height, int alignment, DWORD* out_newwidth) {
   if (width % alignment == 0) return TRUE;
 
-  int newwidth = SBmpGetAligned(width, alignment);
+  int newwidth = SBmpGetPitchForAlignment(width, alignment);
 
   BYTE* newptr = imagedata;
   BYTE* oldptr = &imagedata[height * newwidth - height * width];
@@ -177,7 +177,7 @@ BOOL STORMAPI SBmpRealignImage(LPBYTE imagedata, DWORD imagebytes, int width, in
 }
 
 // @328
-int STORMAPI SBmpGetAligned(int width, int align) {
+int STORMAPI SBmpGetPitchForAlignment(int width, int align) {
   int result = width;
   if (width % align != 0) {
     result = align + width - width % align;

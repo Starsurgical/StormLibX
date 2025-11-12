@@ -28,10 +28,10 @@ extern "C" {
   BOOL STORMAPI SBmpSaveImageEx(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth, int alignment);
 
   // @327
-  BOOL STORMAPI SBmpRealignImage(LPBYTE imagedata, DWORD imagebytes, int width, int height, int alignment, DWORD* out_newwidth);
+  BOOL STORMAPI SBmpPadImage(LPBYTE imagedata, DWORD imagebytes, int width, int height, int alignment, DWORD* out_newwidth);
 
   // @328
-  int STORMAPI SBmpGetAligned(int width, int align);
+  int STORMAPI SBmpGetPitchForAlignment(int width, int align);
 }
 
 #endif

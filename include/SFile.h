@@ -153,13 +153,13 @@ extern "C" {
   LCID STORMAPI SFileGetLocale();
 
   // @295
-  void STORMAPI SFileGetInstancePath(LPSTR dest, DWORD destsize, BOOL includeseparator = FALSE);
+  void STORMAPI SFileGetInstallPath(LPSTR dest, DWORD destsize, BOOL includeseparator = FALSE);
 
   // @296
-  void STORMAPI SFileGetSavePath(LPSTR dest, DWORD destsize, BOOL includeseparator);
+  void STORMAPI SFileGetUserDataPath(LPSTR dest, DWORD destsize, BOOL includeseparator);
 
   // @297
-  void STORMAPI SFileSetSavePath(LPCSTR directory);
+  void STORMAPI SFileSetUserDataPath(LPCSTR directory);
 }
 
 #endif
