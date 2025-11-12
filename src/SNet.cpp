@@ -1,4 +1,5 @@
 #include <storm/Memory.hpp>
+#include <storm/Event.hpp>
 #include "SErr.h"
 #include "SNet.h"
 #include "SDraw.h"
@@ -34,13 +35,15 @@ namespace {
     SNETCAPS caps;
   };
 
-  std::recursive_mutex s_spi_critsect;
+  std::recursive_mutex s_api_critsect;
 
   SNETSPIPTR s_spi;
   std::vector<PROVIDERINFO> s_spi_providerlist;
   PROVIDERINFO* s_spi_providerptr;
 
   CODEVERIFYPROC s_verify_fn;
+
+  char s_game_playerid = -1;
 
 
   int STORMAPI SMessageBox(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
@@ -94,6 +97,41 @@ BOOL STORMAPI SNetCreateGame(LPCSTR gamename, LPCSTR gamepassword, LPCSTR gamede
 
 // @102
 BOOL STORMAPI SNetDestroy() {
+  {
+    SCOPE_LOCK(s_api_critsect);
+
+    if (s_game_playerid != -1) {
+      SNetLeaveGame(SNET_EXIT_AUTO_SHUTDOWN);
+    }
+  }
+
+/*
+  if (s_recv_thread) {
+    s_recv_shutdown = 1;
+    SetEvent(s_recv_event);
+    WaitForSingleObject(s_recv_thread, -1);
+    s_recv_shutdown = 0;
+    CloseHandle(s_recv_thread);
+    s_recv_thread = 0;
+  }
+*/
+
+  {
+    SCOPE_LOCK(s_api_critsect);
+    //SysDestroy();
+    SEvtUnregisterType('SNET', 1);
+    SEvtUnregisterType('SNET', 2);
+    /*ConnDestroy();
+    dword_1506B850 = 0;
+    SpiDestroy(1);
+    if ( s_recv_event )
+    {
+      CloseHandle(s_recv_event);
+      s_recv_event = 0;
+    }
+    s_game_programid = 0;
+    s_game_versionid = 0;*/
+  }
   return TRUE;
 }
 
@@ -106,7 +144,7 @@ BOOL STORMAPI SNetEnumDevices(SNETENUMDEVICESPROC callback) {
   std::vector<SNETSPI_DEVICELIST> local_device_list;
 
   {
-    SCOPE_LOCK(s_spi_critsect);
+    SCOPE_LOCK(s_api_critsect);
 
     if (!s_spi) {
       SErrSetLastError(ERROR_BAD_PROVIDER);
@@ -171,7 +209,7 @@ BOOL STORMAPI SNetGetProviderCaps(SNETCAPSPTR caps) {
   VALIDATE(caps && caps->size == sizeof(SNETCAPS));
   VALIDATEEND;
 
-  SCOPE_LOCK(s_spi_critsect);
+  SCOPE_LOCK(s_api_critsect);
 
   *caps = { sizeof(SNETCAPS) };
 
@@ -280,7 +318,7 @@ BOOL STORMAPI SNetSendLeagueCommand(LPCSTR cmd, SNETLEAGUECMDRESULTPROC callback
   VALIDATE(cmd);
   VALIDATEEND;
 
-  SCOPE_LOCK(s_spi_critsect);
+  SCOPE_LOCK(s_api_critsect);
 
   if (cmd[0] != '/') {
     SErrSetLastError(ERROR_INVALID_PARAMETER);
@@ -301,13 +339,45 @@ BOOL STORMAPI SNetSendLeagueCommand(LPCSTR cmd, SNETLEAGUECMDRESULTPROC callback
 }
 
 // @142
-int STORMAPI SNetSendReplayPath(int a1, int a2, char* replayPath) {
-  return 0;
+int STORMAPI SNetSendReplayPath(LPCSTR replaypath, DWORD gameid, LPCSTR textgameresult) {
+  VALIDATEBEGIN;
+  VALIDATE(replaypath);
+  VALIDATEEND;
+
+  SCOPE_LOCK(s_api_critsect);
+
+  int result = 0;
+  if (s_spi && s_spi->spiSendReplayPath) {
+    result = s_spi->spiSendReplayPath(replaypath, gameid, textgameresult);
+    if (!result) {
+      SErrSetLastError(ERROR_GEN_FAILURE);
+    }
+  }
+  else {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+  }
+  return result;
 }
 
 // @143
-int STORMAPI SNetGetLeagueName(int leagueID) {
-  return 0;
+int STORMAPI SNetGetLeagueId(DWORD* leagueID) {
+  VALIDATEBEGIN;
+  VALIDATE(leagueID);
+  VALIDATEEND;
+
+  SCOPE_LOCK(s_api_critsect);
+
+  int result = 0;
+  if (s_spi && s_spi->spiGetLeagueId) {
+    result = s_spi->spiGetLeagueId(leagueID);
+    if (!result) {
+      SErrSetLastError(ERROR_GEN_FAILURE);
+    }
+  }
+  else {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+  }
+  return result;
 }
 
 // @144
@@ -321,7 +391,7 @@ int STORMAPI SNetLeagueLogout(char* bnetName) {
   VALIDATE(bnetName);
   VALIDATEEND;
 
-  SCOPE_LOCK(s_spi_critsect);
+  SCOPE_LOCK(s_api_critsect);
 
   if (!s_spi || !s_spi->spiLeagueLogout) {
     SErrSetLastError(ERROR_BAD_PROVIDER);
@@ -337,12 +407,28 @@ int STORMAPI SNetLeagueLogout(char* bnetName) {
 
 // @146
 int STORMAPI SNetGetReplyName(char* pszReplyName, size_t nameSize) {
-  return 0;
+  VALIDATEBEGIN;
+  VALIDATE(pszReplyName);
+  VALIDATE(nameSize != 0);
+  VALIDATEEND;
+
+  SCOPE_LOCK(s_api_critsect);
+
+  int result = 0;
+  if (s_spi && s_spi->spiGetReplyName) {
+    if (!s_spi->spiGetReplyName(pszReplyName, nameSize)) {
+      SErrSetLastError(ERROR_GEN_FAILURE);
+    }
+  }
+  else {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+  }
+  return TRUE;
 }
 
 // @147
 // Returns 4 byte protocol identifier of current protocol, only used for debugging, can be removed.
-DWORD STORMAPI SNetGetProtocol() {
+DWORD STORMAPI SNetGetCurrentProviderID() {
   return s_spi_providerptr ? s_spi_providerptr->id : 0;
 }
 

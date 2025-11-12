@@ -48,12 +48,12 @@ EXPORTS
   ;SNetCheckDataFile             @140 NONAME
   ;SNetSendLeagueCommand         @141 NONAME
   ;SNetSendReplayPath            @142 NONAME
-  ;SNetGetLeagueName             @143 NONAME
+  ;SNetGetLeagueId               @143 NONAME
   ;SNetGetPlayerNames            @144 NONAME
   ;SNetLeagueLogout              @145 NONAME
   ;SNetGetReplyName              @146 NONAME
   ;SNetGetCurrentProviderID      @147 NONAME
-  ;SNetSetCodeSignVerifcationFunction @148
+  SNetSetCodeSignVerifcationFunction @148
 
   ;; SDlg
   ;SDlgBeginPaint                @201 NONAME

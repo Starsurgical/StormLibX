@@ -274,7 +274,7 @@ typedef struct _SNETSPI {
   BOOL(STORMAPI* spiReportGameResult)(DWORD ladderid, DWORD arraysize, LPCSTR *namearray, DWORD *resultarray, LPCSTR textgameresult, LPCSTR textplayerresult);
   BOOL(STORMAPI* spiCheckDataFile)(LPCSTR filename, const void *data, DWORD bytes, DWORD *extendedresult);
   BOOL(STORMAPI* spiSendLeagueCommand)(LPCSTR cmd, void* callback);
-  BOOL(STORMAPI* spiSendReplayPath)(LPCSTR replayPath, int, int);
+  BOOL(STORMAPI* spiSendReplayPath)(LPCSTR replaypath, DWORD gameid, LPCSTR textgameresult);
   BOOL(STORMAPI* spiGetLeagueId)(DWORD *pid);
   BOOL(STORMAPI* spiLeagueLogout)(LPCSTR bnetName);
   // Retrieves the player name that last whispered you on battle.net
@@ -379,10 +379,10 @@ extern "C" {
   BOOL STORMAPI SNetSendLeagueCommand(LPCTSTR cmd, SNETLEAGUECMDRESULTPROC callback);
 
   // @142
-  int STORMAPI SNetSendReplayPath(int a1, int a2, char* replayPath);
+  int STORMAPI SNetSendReplayPath(LPCSTR replaypath, DWORD gameid, LPCSTR textgameresult);
 
   // @143
-  int STORMAPI SNetGetLeagueName(int leagueID);
+  int STORMAPI SNetGetLeagueId(DWORD* leagueID);
 
   // @144
   BOOL STORMAPI SNetGetPlayerNames(LPSTR* names);
@@ -395,7 +395,7 @@ extern "C" {
 
   // @147
   // Returns 4 byte protocol identifier of current protocol, only used for debugging, can be removed.
-  DWORD STORMAPI SNetGetProtocol();
+  DWORD STORMAPI SNetGetCurrentProviderID();
 
   // @148
   void SNetSetCodeSignVerifcationFunction(CODEVERIFYPROC);
