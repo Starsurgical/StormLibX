@@ -3,9 +3,11 @@
 
 #include "StormTypes.h"
 
+class SGDIOBJ;
+class SGDIFONT;
 
-DECLARE_HANDLE(HSGDIOBJ);
-DECLARE_HANDLE(HSGDIFONT);
+typedef SGDIOBJ* HSGDIOBJ;
+typedef SGDIFONT* HSGDIFONT;
 
 
 // @383
