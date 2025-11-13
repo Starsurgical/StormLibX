@@ -52,6 +52,7 @@ BOOL STORMAPI SGdiDeleteObject(HSGDIOBJ handle) {
 
 // @385
 BOOL STORMAPI SGdiExtTextOut(std::uint8_t* videobuffer, int x, int y, RECT* rect, std::uint32_t color, int textcoloruse, int bkgcoloruse, const char* string, int chars) {
+  
   return TRUE;
 }
 

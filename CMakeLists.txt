@@ -41,6 +41,7 @@ set(SRC_FILES
           src/SComp.cpp
           src/SDlg.cpp
           src/SDraw.cpp
+          src/SErr.cpp
           src/SFile.cpp
           src/SGdi.cpp
           src/SLog.cpp
