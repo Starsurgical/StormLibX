@@ -10,4 +10,11 @@
 #define VALIDATEENDVOID STORM_VALIDATE_END_VOID
 #endif
 
+typedef void(__fastcall *RECEIVEERRORPROC)(LPCSTR, LPCSTR, LPCSTR*, DWORD, DWORD, bool);
+
+
+void SErrSetBlizzardErrorFunction(RECEIVEERRORPROC pFn);
+
+BOOL STORMAPI SErrGetErrorStr(DWORD errorcode, LPSTR buffer, DWORD bufferchars);
+
 #endif
