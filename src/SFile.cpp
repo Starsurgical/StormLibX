@@ -34,6 +34,15 @@ std::map<HSFILE, HSARCHIVE> s_filearchives;
 
 // @252
 BOOL STORMAPI SFileCloseArchive(HSARCHIVE handle) {
+  for (auto& it = s_filearchives.begin(); it != s_filearchives.end(); ) {
+    if (it->second == handle) {
+      it = s_filearchives.erase(it);
+    }
+    else {
+      it++;
+    }
+  }
+
   for (auto& it = s_archivelist.begin(); it != s_archivelist.end(); ++it) {
     if (it->second == handle) {
       s_archivelist.erase(it);
@@ -91,6 +100,7 @@ DWORD STORMAPI SFileGetFileSize(HSFILE handle, LPDWORD filesizehigh) {
 
 // @266
 BOOL STORMAPI SFileOpenArchive(LPCSTR archivename, int priority, DWORD flags, HSARCHIVE* handle) {
+  flags |= MPQ_OPEN_READ_ONLY | MPQ_OPEN_NO_LISTFILE | MPQ_OPEN_NO_ATTRIBUTES;
   BOOL result = ImplWrapSFileOpenArchive(archivename, priority, flags, reinterpret_cast<HANDLE*>(handle));
   if (handle && *handle) {
     s_archivelist.emplace(priority, *handle);
