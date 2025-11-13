@@ -9,26 +9,26 @@
 #define SBMP_IMAGETYPE_PCX  2
 #define SBMP_IMAGETYPE_TGA  3
 
-typedef LPVOID(STORMAPI* SBMPALLOCPROC)(DWORD);
+typedef void*(STORMAPI* SBMPALLOCPROC)(std::uint32_t);
 
 extern "C" {
   // @321
-  BOOL STORMAPI SBmpDecodeImage(DWORD imagetype, LPBYTE imagedata, DWORD imagebytes, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, DWORD buffersize, int* width = NULL, int* height = NULL, int* bitdepth = NULL);
+  BOOL STORMAPI SBmpDecodeImage(std::uint32_t imagetype, LPBYTE imagedata, std::uint32_t imagebytes, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, std::uint32_t buffersize, int* width = NULL, int* height = NULL, int* bitdepth = NULL);
 
   // @323
-  BOOL STORMAPI SBmpLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, DWORD buffersize, int* width = NULL, int* height = NULL, int* bitdepth = NULL);
+  BOOL STORMAPI SBmpLoadImage(const char* filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, std::uint32_t buffersize, int* width = NULL, int* height = NULL, int* bitdepth = NULL);
 
   // @324
-  BOOL STORMAPI SBmpSaveImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth);
+  BOOL STORMAPI SBmpSaveImage(const char* filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth);
 
   // @325
-  BOOL STORMAPI SBmpAllocLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE* returnedbuffer, int* width = NULL, int* height = NULL, int* bitdepth = NULL, int requestedbitdepth = 0, SBMPALLOCPROC allocproc = NULL);
+  BOOL STORMAPI SBmpAllocLoadImage(const char* filename, LPPALETTEENTRY paletteentries, LPBYTE* returnedbuffer, int* width = NULL, int* height = NULL, int* bitdepth = NULL, int requestedbitdepth = 0, SBMPALLOCPROC allocproc = NULL);
 
   // @326
-  BOOL STORMAPI SBmpSaveImageEx(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth, int alignment);
+  BOOL STORMAPI SBmpSaveImageEx(const char* filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth, int alignment);
 
   // @327
-  BOOL STORMAPI SBmpPadImage(LPBYTE imagedata, DWORD imagebytes, int width, int height, int alignment, DWORD* out_newwidth);
+  BOOL STORMAPI SBmpPadImage(LPBYTE imagedata, std::uint32_t imagebytes, int width, int height, int alignment, std::uint32_t* out_newwidth);
 
   // @328
   int STORMAPI SBmpGetPitchForAlignment(int width, int align);

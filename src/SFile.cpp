@@ -21,13 +21,13 @@
 #define SLIB_FILE_OPEN_LOCAL_FILE   0xFFFFFFFF
 
 
-DWORD s_enabledirect;
+std::uint32_t s_enabledirect;
 std::multimap<int, HSARCHIVE> s_archivelist;
-DWORD s_ioerrormode;
+std::uint32_t s_ioerrormode;
 SFILEERRORPROC s_ioerrorproc;
 BYTE s_platform;
-DWORD s_asyncbudget;
-DWORD s_datachunksize;
+std::uint32_t s_asyncbudget;
+std::uint32_t s_datachunksize;
 char s_savepath[MAX_PATH];
 
 std::map<HSFILE, HSARCHIVE> s_filearchives;
@@ -76,7 +76,7 @@ BOOL STORMAPI SFileDestroy() {
 }
 
 // @263
-BOOL STORMAPI SFileEnableDirectAccess(DWORD flags) {
+BOOL STORMAPI SFileEnableDirectAccess(std::uint32_t flags) {
   s_enabledirect = flags;
   return TRUE;
 }
@@ -94,12 +94,12 @@ BOOL STORMAPI SFileGetFileArchive(HSFILE file, HSARCHIVE* archive) {
 }
 
 // @265
-DWORD STORMAPI SFileGetFileSize(HSFILE handle, LPDWORD filesizehigh) {
+std::uint32_t STORMAPI SFileGetFileSize(HSFILE handle, unsigned long* filesizehigh) {
   return ImplWrapSFileGetFileSize(handle, filesizehigh);
 }
 
 // @266
-BOOL STORMAPI SFileOpenArchive(LPCSTR archivename, int priority, DWORD flags, HSARCHIVE* handle) {
+BOOL STORMAPI SFileOpenArchive(const char* archivename, int priority, std::uint32_t flags, HSARCHIVE* handle) {
   flags |= MPQ_OPEN_READ_ONLY | MPQ_OPEN_NO_LISTFILE | MPQ_OPEN_NO_ATTRIBUTES;
   BOOL result = ImplWrapSFileOpenArchive(archivename, priority, flags, reinterpret_cast<HANDLE*>(handle));
   if (handle && *handle) {
@@ -109,8 +109,8 @@ BOOL STORMAPI SFileOpenArchive(LPCSTR archivename, int priority, DWORD flags, HS
 }
 
 // @267
-BOOL STORMAPI SFileOpenFile(LPCSTR filename, HSFILE* handle) {
-  DWORD flags = 0;
+BOOL STORMAPI SFileOpenFile(const char* filename, HSFILE* handle) {
+  std::uint32_t flags = 0;
   if (s_enabledirect & 1) flags |= SFILE_OPEN_FROM_DISK;
   if (s_enabledirect & 2) flags |= SFILE_OPEN_RELATIVE;
 
@@ -120,8 +120,8 @@ BOOL STORMAPI SFileOpenFile(LPCSTR filename, HSFILE* handle) {
 }
 
 // @268
-BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, LPCSTR filename, DWORD flags, HSFILE* handle) {
-  DWORD dwSearchScope = SLIB_FILE_OPEN_FROM_MPQ;
+BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, const char* filename, std::uint32_t flags, HSFILE* handle) {
+  std::uint32_t dwSearchScope = SLIB_FILE_OPEN_FROM_MPQ;
   if (flags & SFILE_OPEN_FROM_DISK) {
     dwSearchScope = SLIB_FILE_OPEN_LOCAL_FILE;  // ?? maybe
   }
@@ -147,12 +147,12 @@ BOOL STORMAPI SFileOpenFileEx(HSARCHIVE archivehandle, LPCSTR filename, DWORD fl
 }
 
 // @269
-BOOL STORMAPI SFileReadFile(HSFILE handle, LPVOID buffer, DWORD bytestoread, LPDWORD bytesread, LPOVERLAPPED overlapped) {
+BOOL STORMAPI SFileReadFile(HSFILE handle, void* buffer, std::uint32_t bytestoread, unsigned long* bytesread, LPOVERLAPPED overlapped) {
   return ImplWrapSFileReadFile(handle, buffer, bytestoread, bytesread, overlapped);
 }
 
 // @271
-DWORD SFileSetFilePointer(HSFILE handle, LONG lDistanceToMove, LONG* lDistanceToMoveHigh, DWORD dwMoveMethod) {
+std::uint32_t SFileSetFilePointer(HSFILE handle, std::int32_t lDistanceToMove, long* lDistanceToMoveHigh, std::uint32_t dwMoveMethod) {
   return ImplWrapSFileSetFilePointer(handle, lDistanceToMove, lDistanceToMoveHigh, dwMoveMethod);
 }
 
@@ -162,19 +162,19 @@ BOOL STORMAPI SFileSetLocale(LCID lcid) {
 }
 
 // @274
-BOOL STORMAPI SFileSetIoErrorMode(DWORD errormode, SFILEERRORPROC errorproc) {
+BOOL STORMAPI SFileSetIoErrorMode(std::uint32_t errormode, SFILEERRORPROC errorproc) {
   s_ioerrormode = errormode;
   s_ioerrorproc = errorproc;
   return TRUE;
 }
 
 // @275
-BOOL STORMAPI SFileGetArchiveName(HSARCHIVE archive, LPSTR buffer, DWORD bufferchars) {
+BOOL STORMAPI SFileGetArchiveName(HSARCHIVE archive, char* buffer, std::uint32_t bufferchars) {
   return SFileGetFileInfo(archive, SFileInfoClass::SFileMpqFileName, buffer, bufferchars, NULL);
 }
 
 // @276
-BOOL STORMAPI SFileGetFileName(HSFILE file, LPSTR buffer, DWORD bufferchars) {
+BOOL STORMAPI SFileGetFileName(HSFILE file, char* buffer, std::uint32_t bufferchars) {
   TFileEntry fileentry;
   if (SFileGetFileInfo(file, SFileInfoClass::SFileInfoFileEntry, &fileentry, sizeof(fileentry), NULL)) {
     SStrCopy(buffer, fileentry.szFileName, bufferchars);
@@ -204,8 +204,8 @@ void SFileSetPlatform(BYTE platform) {
 }
 
 // @279
-BOOL STORMAPI SFileLoadFile(LPCSTR filename, LPVOID* buffer, DWORD* buffersize, DWORD extrasize, LPOVERLAPPED lpOverlapped) {
-  DWORD flags = 0;
+BOOL STORMAPI SFileLoadFile(const char* filename, void** buffer, std::uint32_t* buffersize, std::uint32_t extrasize, LPOVERLAPPED lpOverlapped) {
+  std::uint32_t flags = 0;
   if (s_enabledirect & 1) flags |= SFILE_OPEN_FROM_DISK;
   if (s_enabledirect & 2) flags |= SFILE_OPEN_RELATIVE;
 
@@ -215,7 +215,7 @@ BOOL STORMAPI SFileLoadFile(LPCSTR filename, LPVOID* buffer, DWORD* buffersize, 
 }
 
 // @280
-BOOL STORMAPI SFileUnloadFile(LPVOID file) {
+BOOL STORMAPI SFileUnloadFile(void* file) {
   if (file) {
     FREE(file);
     return TRUE;
@@ -224,12 +224,12 @@ BOOL STORMAPI SFileUnloadFile(LPVOID file) {
 }
 
 // @281
-BOOL STORMAPI SFileLoadFileEx(HSARCHIVE hArchive, LPCSTR filename, LPVOID* buffer, LPDWORD buffersize, DWORD extrasize, DWORD searchScope, struct _OVERLAPPED* lpOverlapped) {
+BOOL STORMAPI SFileLoadFileEx(HSARCHIVE hArchive, const char* filename, void** buffer, std::uint32_t* buffersize, std::uint32_t extrasize, std::uint32_t searchScope, struct _OVERLAPPED* lpOverlapped) {
 
   HSFILE hFile;
   if (SFileOpenFileEx(hArchive, filename, searchScope, &hFile)) {
     // TODO critical section?
-    DWORD dwFileSize = SFileGetFileSize(hFile);
+    std::uint32_t dwFileSize = SFileGetFileSize(hFile);
     LPBYTE pData = (LPBYTE)ALLOC(dwFileSize + extrasize);
 
     if (SFileReadFile(hFile, pData, dwFileSize, NULL, lpOverlapped)) {
@@ -251,12 +251,12 @@ BOOL STORMAPI SFileLoadFileEx(HSARCHIVE hArchive, LPCSTR filename, LPVOID* buffe
 }
 
 // @284
-void STORMAPI SFileSetAsyncBudget(DWORD budget) {
+void STORMAPI SFileSetAsyncBudget(std::uint32_t budget) {
   s_asyncbudget = budget;
 }
 
 // @285
-void STORMAPI SFileSetDataChunkSize(DWORD chunksize) {
+void STORMAPI SFileSetDataChunkSize(std::uint32_t chunksize) {
   s_datachunksize = chunksize;
 }
 
@@ -266,7 +266,7 @@ LCID STORMAPI SFileGetLocale() {
 }
 
 // @295
-void STORMAPI SFileGetInstallPath(LPSTR dest, DWORD destsize, BOOL includeseparator) {
+void STORMAPI SFileGetInstallPath(char* dest, std::uint32_t destsize, BOOL includeseparator) {
   const char* path = SDL_GetBasePath();
   char tmp[MAX_PATH];
   SStrCopy(tmp, path, sizeof(tmp));
@@ -280,7 +280,7 @@ void STORMAPI SFileGetInstallPath(LPSTR dest, DWORD destsize, BOOL includesepara
 }
 
 // @296
-void STORMAPI SFileGetUserDataPath(LPSTR dest, DWORD destsize, BOOL includeseparator) {
+void STORMAPI SFileGetUserDataPath(char* dest, std::uint32_t destsize, BOOL includeseparator) {
   int len = SStrPrintf(dest, destsize, "%s", s_savepath);
   if (includeseparator) {
     if (dest[len - 1] != '\\') {
@@ -293,6 +293,6 @@ void STORMAPI SFileGetUserDataPath(LPSTR dest, DWORD destsize, BOOL includesepar
 }
 
 // @297
-void STORMAPI SFileSetUserDataPath(LPCSTR directory) {
+void STORMAPI SFileSetUserDataPath(const char* directory) {
   SStrCopy(s_savepath, directory, MAX_PATH);
 }

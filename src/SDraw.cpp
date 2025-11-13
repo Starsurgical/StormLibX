@@ -29,7 +29,7 @@ SDL_Palette* s_sdl_palette;
 
 
 // @342
-BOOL STORMAPI SDrawCaptureScreen(LPCSTR filename, BOOL usesavepath) {
+BOOL STORMAPI SDrawCaptureScreen(const char* filename, BOOL usesavepath) {
   char genFilename[MAX_PATH] = {};
   if (!filename) {
     auto time = std::time(nullptr);
@@ -73,7 +73,7 @@ BOOL STORMAPI SDrawGetScreenSize(int* width, int* height, int* bitdepth) {
 }
 
 // @350
-BOOL STORMAPI SDrawLockSurface(int surfacenumber, LPCRECT rect, LPBYTE* ptr, int* pitch, DWORD flags) {
+BOOL STORMAPI SDrawLockSurface(int surfacenumber, LPCRECT rect, LPBYTE* ptr, int* pitch, std::uint32_t flags) {
   if (ptr) *ptr = nullptr;
   if (pitch) *pitch = 0;
 
@@ -125,7 +125,7 @@ BOOL STORMAPI SDrawManualInitialize(HWND framewindow, void* directdraw, void* fr
 }
 
 // @352
-int STORMAPI SDrawMessageBox(LPCSTR text, LPCSTR title, DWORD flags) {
+int STORMAPI SDrawMessageBox(const char* text, const char* title, std::uint32_t flags) {
   SDL_MessageBoxData msgbox = {};
   std::vector<SDL_MessageBoxButtonData> buttons;
 
@@ -177,7 +177,7 @@ int STORMAPI SDrawMessageBox(LPCSTR text, LPCSTR title, DWORD flags) {
 }
 
 // @356
-BOOL STORMAPI SDrawUnlockSurface(int surfacenumber, LPBYTE ptr, DWORD numrects, LPCRECT rectarray) {
+BOOL STORMAPI SDrawUnlockSurface(int surfacenumber, LPBYTE ptr, std::uint32_t numrects, LPCRECT rectarray) {
   if (s_sdl_canvas == nullptr) return FALSE;
   if (surfacenumber != 0) return FALSE;
 
@@ -187,7 +187,7 @@ BOOL STORMAPI SDrawUnlockSurface(int surfacenumber, LPBYTE ptr, DWORD numrects, 
 }
 
 // @357
-BOOL STORMAPI SDrawUpdatePalette(DWORD firstentry, DWORD numentries, LPPALETTEENTRY entries, BOOL reservedentries) {
+BOOL STORMAPI SDrawUpdatePalette(std::uint32_t firstentry, std::uint32_t numentries, LPPALETTEENTRY entries, BOOL reservedentries) {
   if (s_sdl_palette == nullptr) return FALSE;
 
   SDL_Color colors[256];

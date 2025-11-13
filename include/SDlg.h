@@ -5,7 +5,7 @@
 
 extern "C" {
 
-  BOOL STORMAPI SDlgSetCursor(HWND window, HCURSOR cursor, DWORD id, HCURSOR *oldcursor);
+  BOOL STORMAPI SDlgSetCursor(HWND window, HCURSOR cursor, std::uint32_t id, HCURSOR *oldcursor);
 
   int STORMAPI SDlgSetMessageLoopThrottle(int throttle);
 }

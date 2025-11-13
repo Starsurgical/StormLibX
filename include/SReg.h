@@ -13,34 +13,34 @@
 extern "C" {
 
   // @421
-  BOOL STORMAPI SRegLoadData(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPVOID buffer, DWORD buffersize, DWORD* bytesread);
+  BOOL STORMAPI SRegLoadData(const char* keyname, const char* valuename, std::uint32_t flags, void* buffer, std::uint32_t buffersize, std::uint32_t* bytesread);
 
   // @422
-  BOOL STORMAPI SRegLoadString(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPSTR buffer, DWORD bufferchars);
+  BOOL STORMAPI SRegLoadString(const char* keyname, const char* valuename, std::uint32_t flags, char* buffer, std::uint32_t bufferchars);
 
   // @423
-  BOOL STORMAPI SRegLoadValue(LPCSTR keyname, LPCSTR valuename, DWORD flags, DWORD* value);
+  BOOL STORMAPI SRegLoadValue(const char* keyname, const char* valuename, std::uint32_t flags, std::uint32_t* value);
 
   // @424
-  BOOL STORMAPI SRegSaveData(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPVOID data, DWORD databytes);
+  BOOL STORMAPI SRegSaveData(const char* keyname, const char* valuename, std::uint32_t flags, void* data, std::uint32_t databytes);
 
   // @425
-  BOOL STORMAPI SRegSaveString(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPCSTR string);
+  BOOL STORMAPI SRegSaveString(const char* keyname, const char* valuename, std::uint32_t flags, const char* string);
 
   // @426
-  BOOL STORMAPI SRegSaveValue(LPCSTR keyname, LPCSTR valuename, DWORD flags, DWORD value);
+  BOOL STORMAPI SRegSaveValue(const char* keyname, const char* valuename, std::uint32_t flags, std::uint32_t value);
 
   // @427
-  BOOL STORMAPI SRegGetBaseKey(DWORD flags, LPSTR buffer, DWORD buffersize);
+  BOOL STORMAPI SRegGetBaseKey(std::uint32_t flags, char* buffer, std::uint32_t buffersize);
 
   // @428
-  BOOL STORMAPI SRegDeleteValue(LPCSTR keyname, LPCSTR valuename, DWORD flags);
+  BOOL STORMAPI SRegDeleteValue(const char* keyname, const char* valuename, std::uint32_t flags);
 
   // @429
-  BOOL STORMAPI SRegEnumKey(LPCSTR keyname, DWORD flags, DWORD index, LPSTR buffer, DWORD bufferchars);
+  BOOL STORMAPI SRegEnumKey(const char* keyname, std::uint32_t flags, std::uint32_t index, char* buffer, std::uint32_t bufferchars);
 
   // @430
-  BOOL STORMAPI SRegGetNumSubKeys(LPCSTR keyname, DWORD flags, DWORD* subkeys);
+  BOOL STORMAPI SRegGetNumSubKeys(const char* keyname, std::uint32_t flags, std::uint32_t* subkeys);
 }
 
 #endif

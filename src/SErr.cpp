@@ -11,7 +11,7 @@
 RECEIVEERRORPROC s_err_callback;
 
 
-const char* GetStormErrorString(DWORD errorcode) {
+const char* GetStormErrorString(std::uint32_t errorcode) {
   switch (errorcode) {
   case 0x85100000: return "ASSERTION!\r\n";
   case 0x85100065: return "STORM_ERROR_BAD_ARGUMENT\r\n";
@@ -161,7 +161,7 @@ void SErrSetBlizzardErrorFunction(RECEIVEERRORPROC pFn) {
 }
 
 // @462
-BOOL STORMAPI SErrGetErrorStr(DWORD errorcode, LPSTR buffer, DWORD bufferchars) {
+BOOL STORMAPI SErrGetErrorStr(std::uint32_t errorcode, char* buffer, std::uint32_t bufferchars) {
   const char* pszErrorString = GetStormErrorString(errorcode);
 
   if (!pszErrorString) {

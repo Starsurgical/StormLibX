@@ -19,7 +19,7 @@ namespace {
 }
 
 // @321
-BOOL STORMAPI SBmpDecodeImage(DWORD imagetype, LPBYTE imagedata, DWORD imagebytes, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, DWORD buffersize, int* width, int* height, int* bitdepth) {
+BOOL STORMAPI SBmpDecodeImage(std::uint32_t imagetype, LPBYTE imagedata, std::uint32_t imagebytes, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, std::uint32_t buffersize, int* width, int* height, int* bitdepth) {
   if (width) *width = 0;
   if (height) *height = 0;
   if (bitdepth) *bitdepth = 0;
@@ -40,7 +40,7 @@ BOOL STORMAPI SBmpDecodeImage(DWORD imagetype, LPBYTE imagedata, DWORD imagebyte
   if (bitdepth) *bitdepth = surface->format->BitsPerPixel;
 
   if (bitmapbits && buffersize) {
-    DWORD len = std::min(buffersize, static_cast<DWORD>(surface->w * surface->h * surface->format->BytesPerPixel));
+    std::uint32_t len = std::min(buffersize, static_cast<std::uint32_t>(surface->w * surface->h * surface->format->BytesPerPixel));
     SMemCopy(bitmapbits, surface->pixels, len);
   }
 
@@ -63,7 +63,7 @@ BOOL STORMAPI SBmpDecodeImage(DWORD imagetype, LPBYTE imagedata, DWORD imagebyte
 }
 
 // @323
-BOOL STORMAPI SBmpLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, DWORD buffersize, int* width, int* height, int* bitdepth) {
+BOOL STORMAPI SBmpLoadImage(const char* filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, std::uint32_t buffersize, int* width, int* height, int* bitdepth) {
   if (width) *width = 0;
   if (height) *height = 0;
   if (bitdepth) *bitdepth = 0;
@@ -76,7 +76,7 @@ BOOL STORMAPI SBmpLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBY
   HSFILE hFile;
   if (!SFileOpenFile(filename, &hFile)) return FALSE;
 
-  DWORD imagebytes = SFileGetFileSize(hFile);
+  std::uint32_t imagebytes = SFileGetFileSize(hFile);
   LPBYTE imagedata = static_cast<LPBYTE>(ALLOC(imagebytes));
   if (!SFileReadFile(hFile, imagedata, imagebytes)) {
     SFileCloseFile(hFile);
@@ -89,12 +89,12 @@ BOOL STORMAPI SBmpLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBY
 }
 
 // @324
-BOOL STORMAPI SBmpSaveImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth) {
+BOOL STORMAPI SBmpSaveImage(const char* filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth) {
   return SBmpSaveImageEx(filename, paletteentries, bitmapbits, width, height, bitdepth, 0);
 }
 
 // @325
-BOOL STORMAPI SBmpAllocLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE* returnedbuffer, int* width, int* height, int* bitdepth, int requestedbitdepth, SBMPALLOCPROC allocproc) {
+BOOL STORMAPI SBmpAllocLoadImage(const char* filename, LPPALETTEENTRY paletteentries, LPBYTE* returnedbuffer, int* width, int* height, int* bitdepth, int requestedbitdepth, SBMPALLOCPROC allocproc) {
   if (returnedbuffer) *returnedbuffer = nullptr;
   if (width) *width = 0;
   if (height) *height = 0;
@@ -108,7 +108,7 @@ BOOL STORMAPI SBmpAllocLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries,
   HSFILE hFile;
   if (!SFileOpenFile(filename, &hFile)) return FALSE;
 
-  DWORD imagebytes = SFileGetFileSize(hFile);
+  std::uint32_t imagebytes = SFileGetFileSize(hFile);
   LPBYTE imagedata = static_cast<LPBYTE>(ALLOC(imagebytes));
   if (!SFileReadFile(hFile, imagedata, imagebytes)) {
     SFileCloseFile(hFile);
@@ -119,13 +119,13 @@ BOOL STORMAPI SBmpAllocLoadImage(LPCSTR filename, LPPALETTEENTRY paletteentries,
   int w, h, bpp;
   SBmpDecodeImage(0, imagedata, imagebytes, nullptr, nullptr, 0, &w, &h, &bpp);
 
-  DWORD pixeldatasize = w * h * bpp / 8;
+  std::uint32_t pixeldatasize = w * h * bpp / 8;
   LPBYTE pixeldata = static_cast<LPBYTE>(allocproc ? allocproc(pixeldatasize) : ALLOC(pixeldatasize));
   return SBmpDecodeImage(0, imagedata, imagebytes, paletteentries, pixeldata, pixeldatasize, width, height, bitdepth);
 }
 
 // @326
-BOOL STORMAPI SBmpSaveImageEx(LPCSTR filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth, int alignment) {
+BOOL STORMAPI SBmpSaveImageEx(const char* filename, LPPALETTEENTRY paletteentries, LPBYTE bitmapbits, int width, int height, int bitdepth, int alignment) {
   if (bitdepth != 8 && bitdepth != 24 && bitdepth != 32) {
     return FALSE;
   }
@@ -153,7 +153,7 @@ BOOL STORMAPI SBmpSaveImageEx(LPCSTR filename, LPPALETTEENTRY paletteentries, LP
 }
 
 // @327
-BOOL STORMAPI SBmpPadImage(LPBYTE imagedata, DWORD imagebytes, int width, int height, int alignment, DWORD* out_newwidth) {
+BOOL STORMAPI SBmpPadImage(LPBYTE imagedata, std::uint32_t imagebytes, int width, int height, int alignment, std::uint32_t* out_newwidth) {
   if (width % alignment == 0) return TRUE;
 
   int newwidth = SBmpGetPitchForAlignment(width, alignment);

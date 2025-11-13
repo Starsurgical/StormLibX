@@ -6,7 +6,7 @@
 #include <algorithm>
 
 namespace {
-  const char* SRegGetBaseKeyInternal(DWORD flags) {
+  const char* SRegGetBaseKeyInternal(std::uint32_t flags) {
     return (flags & SREG_FLAG_BATTLENET) ? "Software\\Battle.net\\" : "Software\\Blizzard Entertainment\\";
   }
 
@@ -14,7 +14,7 @@ namespace {
     return node.is_table() ? *node.as_table() : toml::table{};
   }
 
-  toml::table GetTomlSettings(DWORD flags) {
+  toml::table GetTomlSettings(std::uint32_t flags) {
     std::string path = SRegGetBaseKeyInternal(flags);
     std::replace(std::begin(path), std::end(path), '\\', '/');
 
@@ -26,7 +26,7 @@ namespace {
     }
   }
 
-  void WriteTomlSettings(toml::table& settings, DWORD flags) {
+  void WriteTomlSettings(toml::table& settings, std::uint32_t flags) {
     std::string path = SRegGetBaseKeyInternal(flags);
     std::replace(std::begin(path), std::end(path), '\\', '/');
 
@@ -39,13 +39,13 @@ namespace {
 }
 
 // @421
-BOOL STORMAPI SRegLoadData(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPVOID buffer, DWORD buffersize, DWORD* bytesread) {
+BOOL STORMAPI SRegLoadData(const char* keyname, const char* valuename, std::uint32_t flags, void* buffer, std::uint32_t buffersize, std::uint32_t* bytesread) {
   auto& settings = GetTomlSettings(flags);
 
   if (!keyname || !valuename) return FALSE;
   if (bytesread) *bytesread = 0;
 
-  DWORD read = 0;
+  std::uint32_t read = 0;
   auto node = settings[keyname][valuename];
   if (!node.is_array()) return FALSE;
 
@@ -65,7 +65,7 @@ BOOL STORMAPI SRegLoadData(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPVOID
         
         SStrCopy(&pBuffer[read], elemstr.c_str(), buffersize - read);
       }
-      read += static_cast<DWORD>(elemstr.size()) + 1;
+      read += static_cast<std::uint32_t>(elemstr.size()) + 1;
     }
   }
   else {
@@ -86,7 +86,7 @@ BOOL STORMAPI SRegLoadData(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPVOID
 }
 
 // @422
-BOOL STORMAPI SRegLoadString(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPSTR buffer, DWORD bufferchars) {
+BOOL STORMAPI SRegLoadString(const char* keyname, const char* valuename, std::uint32_t flags, char* buffer, std::uint32_t bufferchars) {
   auto& settings = GetTomlSettings(flags);
 
   if (!keyname || !valuename || !buffer || bufferchars == 0) return FALSE;
@@ -108,7 +108,7 @@ BOOL STORMAPI SRegLoadString(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPST
 }
 
 // @423
-BOOL STORMAPI SRegLoadValue(LPCSTR keyname, LPCSTR valuename, DWORD flags, DWORD* value) {
+BOOL STORMAPI SRegLoadValue(const char* keyname, const char* valuename, std::uint32_t flags, std::uint32_t* value) {
   auto& settings = GetTomlSettings(flags);
 
   if (!keyname || !valuename || !value) return FALSE;
@@ -116,7 +116,7 @@ BOOL STORMAPI SRegLoadValue(LPCSTR keyname, LPCSTR valuename, DWORD flags, DWORD
   auto& node = settings[keyname][valuename];
 
   if (node.is_integer()) {
-    *value = static_cast<DWORD>(node.as_integer()->get());
+    *value = static_cast<std::uint32_t>(node.as_integer()->get());
     return TRUE;
   }
   else if (node.is_string()) {
@@ -127,21 +127,21 @@ BOOL STORMAPI SRegLoadValue(LPCSTR keyname, LPCSTR valuename, DWORD flags, DWORD
 }
 
 // @424
-BOOL STORMAPI SRegSaveData(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPVOID data, DWORD databytes) {
+BOOL STORMAPI SRegSaveData(const char* keyname, const char* valuename, std::uint32_t flags, void* data, std::uint32_t databytes) {
   auto& settings = GetTomlSettings(flags);
 
   toml::table tbl = GetOrCreateTable(settings[keyname]);
 
   if (flags & SREG_FLAG_MULTISZ) {
     char* psz = reinterpret_cast<char*>(data);
-    DWORD written = 0;
+    std::uint32_t written = 0;
 
     toml::array arr;
     while (written < databytes) {
       std::string str(&psz[written]);
       arr.push_back(str);
       
-      written += static_cast<DWORD>(str.size()) + 1;
+      written += static_cast<std::uint32_t>(str.size()) + 1;
     }
 
     tbl.insert_or_assign(valuename, arr);
@@ -161,7 +161,7 @@ BOOL STORMAPI SRegSaveData(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPVOID
 }
 
 // @425
-BOOL STORMAPI SRegSaveString(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPCSTR string) {
+BOOL STORMAPI SRegSaveString(const char* keyname, const char* valuename, std::uint32_t flags, const char* string) {
   auto& settings = GetTomlSettings(flags);
 
   toml::table tbl = GetOrCreateTable(settings[keyname]);
@@ -173,7 +173,7 @@ BOOL STORMAPI SRegSaveString(LPCSTR keyname, LPCSTR valuename, DWORD flags, LPCS
 }
 
 // @426
-BOOL STORMAPI SRegSaveValue(LPCSTR keyname, LPCSTR valuename, DWORD flags, DWORD value) {
+BOOL STORMAPI SRegSaveValue(const char* keyname, const char* valuename, std::uint32_t flags, std::uint32_t value) {
   auto& settings = GetTomlSettings(flags);
 
   toml::table tbl = GetOrCreateTable(settings[keyname]);
@@ -185,7 +185,7 @@ BOOL STORMAPI SRegSaveValue(LPCSTR keyname, LPCSTR valuename, DWORD flags, DWORD
 }
 
 // @427
-BOOL STORMAPI SRegGetBaseKey(DWORD flags, LPSTR buffer, DWORD buffersize) {
+BOOL STORMAPI SRegGetBaseKey(std::uint32_t flags, char* buffer, std::uint32_t buffersize) {
   if (buffer == nullptr || buffersize == 0) return FALSE;
 
   SStrCopy(buffer, SRegGetBaseKeyInternal(flags), buffersize);
@@ -193,7 +193,7 @@ BOOL STORMAPI SRegGetBaseKey(DWORD flags, LPSTR buffer, DWORD buffersize) {
 }
 
 // @428
-BOOL STORMAPI SRegDeleteValue(LPCSTR keyname, LPCSTR valuename, DWORD flags) {
+BOOL STORMAPI SRegDeleteValue(const char* keyname, const char* valuename, std::uint32_t flags) {
   auto& settings = GetTomlSettings(flags);
 
   toml::table tbl = GetOrCreateTable(settings[keyname]);
@@ -205,7 +205,7 @@ BOOL STORMAPI SRegDeleteValue(LPCSTR keyname, LPCSTR valuename, DWORD flags) {
 }
 
 // @429
-BOOL STORMAPI SRegEnumKey(LPCSTR keyname, DWORD flags, DWORD index, LPSTR buffer, DWORD bufferchars) {
+BOOL STORMAPI SRegEnumKey(const char* keyname, std::uint32_t flags, std::uint32_t index, char* buffer, std::uint32_t bufferchars) {
   auto& settings = GetTomlSettings(flags);
   
   toml::table tbl = GetOrCreateTable(settings[keyname]);
@@ -221,11 +221,11 @@ BOOL STORMAPI SRegEnumKey(LPCSTR keyname, DWORD flags, DWORD index, LPSTR buffer
 }
 
 // @430
-BOOL STORMAPI SRegGetNumSubKeys(LPCSTR keyname, DWORD flags, DWORD* subkeys) {
+BOOL STORMAPI SRegGetNumSubKeys(const char* keyname, std::uint32_t flags, std::uint32_t* subkeys) {
   auto& settings = GetTomlSettings(flags);
   
   toml::table tbl = GetOrCreateTable(settings[keyname]);
-  if (subkeys) *subkeys = static_cast<DWORD>(tbl.size());
+  if (subkeys) *subkeys = static_cast<std::uint32_t>(tbl.size());
   return TRUE;
 }
 

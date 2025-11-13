@@ -18,8 +18,8 @@
 caps.dat
 
   struct {
-    DWORD entrysize;
-    DWORD providerid;
+    std::uint32_t entrysize;
+    std::uint32_t providerid;
     char description[]; // null terminated string of any length
     SNETCAPS caps;
   }[]; // repeats for the number of providers
@@ -28,8 +28,8 @@ caps.dat
 namespace {
   struct PROVIDERINFO {
     char     filename[MAX_PATH];
-    DWORD    index;
-    DWORD    id;
+    std::uint32_t    index;
+    std::uint32_t    id;
     char     desc[SNETSPI_MAXSTRINGLENGTH];
     char     req[SNETSPI_MAXSTRINGLENGTH];
     SNETCAPS caps;
@@ -46,7 +46,7 @@ namespace {
   char s_game_playerid = -1;
 
 
-  int STORMAPI SMessageBox(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) {
+  int STORMAPI SMessageBox(HWND hWnd, const char* lpText, const char* lpCaption, UINT uType) {
     return SDrawMessageBox(lpText, lpCaption, uType);
   }
 
@@ -91,7 +91,7 @@ namespace {
 }
 
 // @101
-BOOL STORMAPI SNetCreateGame(LPCSTR gamename, LPCSTR gamepassword, LPCSTR gamedescription, DWORD gamecategorybits, LPVOID initdata, DWORD initdatabytes, DWORD maxplayers, LPCSTR playername, LPCSTR playerdescription, DWORD* playerid) {
+BOOL STORMAPI SNetCreateGame(const char* gamename, const char* gamepassword, const char* gamedescription, std::uint32_t gamecategorybits, void* initdata, std::uint32_t initdatabytes, std::uint32_t maxplayers, const char* playername, const char* playerdescription, std::uint32_t* playerid) {
   return SNetCreateLadderGame(gamename, gamepassword, gamedescription, gamecategorybits, 0, 0, initdata, initdatabytes, maxplayers, playername, playerdescription, playerid);
 }
 
@@ -179,27 +179,27 @@ BOOL STORMAPI SNetEnumProviders(SNETCAPSPTR mincaps, SNETENUMPROVIDERSPROC callb
 }
 
 // @106
-BOOL STORMAPI SNetDropPlayer(DWORD playerid, DWORD exitcode) {
+BOOL STORMAPI SNetDropPlayer(std::uint32_t playerid, std::uint32_t exitcode) {
   return FALSE;
 }
 
 // @107
-BOOL STORMAPI SNetGetGameInfo(DWORD index, LPVOID buffer, DWORD buffersize, DWORD* byteswritten) {
+BOOL STORMAPI SNetGetGameInfo(std::uint32_t index, void* buffer, std::uint32_t buffersize, std::uint32_t* byteswritten) {
   return FALSE;
 }
 
 // @109
-BOOL STORMAPI SNetGetNumPlayers(DWORD* firstplayerid, DWORD* lastplayerid, DWORD* activeplayers) {
+BOOL STORMAPI SNetGetNumPlayers(std::uint32_t* firstplayerid, std::uint32_t* lastplayerid, std::uint32_t* activeplayers) {
   return FALSE;
 }
 
 // @112
-BOOL STORMAPI SNetGetPlayerCaps(DWORD playerid, SNETCAPSPTR caps) {
+BOOL STORMAPI SNetGetPlayerCaps(std::uint32_t playerid, SNETCAPSPTR caps) {
   return FALSE;
 }
 
 // @113
-BOOL STORMAPI SNetGetPlayerName(DWORD playerid, LPSTR buffer, DWORD buffersize) {
+BOOL STORMAPI SNetGetPlayerName(std::uint32_t playerid, char* buffer, std::uint32_t buffersize) {
   return FALSE;
 }
 
@@ -223,47 +223,47 @@ BOOL STORMAPI SNetGetProviderCaps(SNETCAPSPTR caps) {
 }
 
 // @115
-BOOL STORMAPI SNetGetTurnsInTransit(DWORD* turns) {
+BOOL STORMAPI SNetGetTurnsInTransit(std::uint32_t* turns) {
   return FALSE;
 }
 
 // @116
-BOOL STORMAPI SNetInitializeDevice(DWORD deviceid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata) {
+BOOL STORMAPI SNetInitializeDevice(std::uint32_t deviceid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata) {
   return FALSE;
 }
 
 // @117
-BOOL STORMAPI SNetInitializeProvider(DWORD providerid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata) {
+BOOL STORMAPI SNetInitializeProvider(std::uint32_t providerid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata) {
   return FALSE;
 }
 
 // @118
-BOOL STORMAPI SNetJoinGame(DWORD gameid, LPCSTR gamename, LPCSTR gamepassword, LPCSTR playername, LPCSTR playerdescription, DWORD* playerid) {
+BOOL STORMAPI SNetJoinGame(std::uint32_t gameid, const char* gamename, const char* gamepassword, const char* playername, const char* playerdescription, std::uint32_t* playerid) {
   return FALSE;
 }
 
 // @119
-BOOL STORMAPI SNetLeaveGame(DWORD exitcode) {
+BOOL STORMAPI SNetLeaveGame(std::uint32_t exitcode) {
   return FALSE;
 }
 
 // @120
-BOOL STORMAPI SNetPerformUpgrade(DWORD* upgradestatus) {
+BOOL STORMAPI SNetPerformUpgrade(std::uint32_t* upgradestatus) {
   return FALSE;
 }
 
 // @121
-BOOL STORMAPI SNetReceiveMessage(DWORD* senderplayerid, LPVOID* data, DWORD* databytes) {
+BOOL STORMAPI SNetReceiveMessage(std::uint32_t* senderplayerid, void** data, std::uint32_t* databytes) {
   return FALSE;
 }
 
 // @122
-BOOL STORMAPI SNetReceiveTurns(DWORD firstplayerid, DWORD arraysize, LPVOID* arraydata, LPDWORD arraydatabytes, LPDWORD arrayplayerstatus) {
+BOOL STORMAPI SNetReceiveTurns(std::uint32_t firstplayerid, std::uint32_t arraysize, void** arraydata, std::uint32_t* arraydatabytes, std::uint32_t* arrayplayerstatus) {
   return FALSE;
 }
 
 // @123
-BOOL STORMAPI SNetRegisterEventHandler(DWORD eventid, SNETEVENTPROC callback) {
+BOOL STORMAPI SNetRegisterEventHandler(std::uint32_t eventid, SNETEVENTPROC callback) {
   VALIDATEBEGIN;
   VALIDATE(callback);
   VALIDATEEND;
@@ -281,42 +281,42 @@ BOOL STORMAPI SNetRegisterEventHandler(DWORD eventid, SNETEVENTPROC callback) {
 }
 
 // @125
-BOOL STORMAPI SNetSelectGame(DWORD flags, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata, DWORD* playerid) {
+BOOL STORMAPI SNetSelectGame(std::uint32_t flags, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata, std::uint32_t* playerid) {
   return FALSE;
 }
 
 // @127
-BOOL STORMAPI SNetSendMessage(DWORD targetplayerid, LPVOID data, DWORD databytes) {
+BOOL STORMAPI SNetSendMessage(std::uint32_t targetplayerid, void* data, std::uint32_t databytes) {
   return FALSE;
 }
 
 // @128
-BOOL STORMAPI SNetSendTurn(LPVOID data, DWORD databytes) {
+BOOL STORMAPI SNetSendTurn(void* data, std::uint32_t databytes) {
   return FALSE;
 }
 
 // @130
-BOOL STORMAPI SNetSetGameMode(DWORD modeflags) {
+BOOL STORMAPI SNetSetGameMode(std::uint32_t modeflags) {
   return FALSE;
 }
 
 // @133
-BOOL STORMAPI SNetEnumGamesEx(DWORD categorybits, DWORD categorymask, SNETENUMGAMESEXPROC callback, DWORD* hintnextcall) {
+BOOL STORMAPI SNetEnumGamesEx(std::uint32_t categorybits, std::uint32_t categorymask, SNETENUMGAMESEXPROC callback, std::uint32_t* hintnextcall) {
   return FALSE;
 }
 
 // @134
-BOOL STORMAPI SNetSendServerChatCommand(LPCSTR command) {
+BOOL STORMAPI SNetSendServerChatCommand(const char* command) {
   return FALSE;
 }
 
 // @137
-BOOL STORMAPI SNetDisconnectAll(DWORD flags) {
+BOOL STORMAPI SNetDisconnectAll(std::uint32_t flags) {
   return FALSE;
 }
 
 // @138
-BOOL STORMAPI SNetCreateLadderGame(LPCSTR gamename, LPCSTR gamepassword, LPCSTR gamedescription, DWORD gamecategorybits, DWORD ladderid, DWORD gamemode, LPVOID initdata, DWORD initdatabytes, DWORD maxplayers, LPCSTR playername, LPCSTR playerdescription, DWORD* playerid) {
+BOOL STORMAPI SNetCreateLadderGame(const char* gamename, const char* gamepassword, const char* gamedescription, std::uint32_t gamecategorybits, std::uint32_t ladderid, std::uint32_t gamemode, void* initdata, std::uint32_t initdatabytes, std::uint32_t maxplayers, const char* playername, const char* playerdescription, std::uint32_t* playerid) {
   return FALSE;
 }
 
@@ -326,7 +326,7 @@ BOOL STORMAPI SNetReportGameResult(unsigned firstplayerid, int arraysize, int* r
 }
 
 // @141
-BOOL STORMAPI SNetSendLeagueCommand(LPCSTR cmd, SNETLEAGUECMDRESULTPROC callback) {
+BOOL STORMAPI SNetSendLeagueCommand(const char* cmd, SNETLEAGUECMDRESULTPROC callback) {
   VALIDATEBEGIN;
   VALIDATE(cmd);
   VALIDATEEND;
@@ -352,7 +352,7 @@ BOOL STORMAPI SNetSendLeagueCommand(LPCSTR cmd, SNETLEAGUECMDRESULTPROC callback
 }
 
 // @142
-int STORMAPI SNetSendReplayPath(LPCSTR replaypath, DWORD gameid, LPCSTR textgameresult) {
+int STORMAPI SNetSendReplayPath(const char* replaypath, std::uint32_t gameid, const char* textgameresult) {
   VALIDATEBEGIN;
   VALIDATE(replaypath);
   VALIDATEEND;
@@ -373,7 +373,7 @@ int STORMAPI SNetSendReplayPath(LPCSTR replaypath, DWORD gameid, LPCSTR textgame
 }
 
 // @143
-int STORMAPI SNetGetLeagueId(DWORD* leagueID) {
+int STORMAPI SNetGetLeagueId(std::uint32_t* leagueID) {
   VALIDATEBEGIN;
   VALIDATE(leagueID);
   VALIDATEEND;
@@ -394,7 +394,7 @@ int STORMAPI SNetGetLeagueId(DWORD* leagueID) {
 }
 
 // @144
-BOOL STORMAPI SNetGetPlayerNames(LPSTR* names) {
+BOOL STORMAPI SNetGetPlayerNames(char** names) {
   return FALSE;
 }
 
@@ -441,7 +441,7 @@ int STORMAPI SNetGetReplyName(char* pszReplyName, size_t nameSize) {
 
 // @147
 // Returns 4 byte protocol identifier of current protocol, only used for debugging, can be removed.
-DWORD STORMAPI SNetGetCurrentProviderID() {
+std::uint32_t STORMAPI SNetGetCurrentProviderID() {
   return s_spi_providerptr ? s_spi_providerptr->id : 0;
 }
 

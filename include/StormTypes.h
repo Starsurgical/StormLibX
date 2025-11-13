@@ -1,6 +1,8 @@
 #ifndef __STORMLIBX_STORMTYPES_H__
 #define __STORMLIBX_STORMTYPES_H__
 
+#include <cstdint>
+
 #include <StormPort.h>
 #include <storm/Array.hpp>
 #include <storm/Handle.hpp>

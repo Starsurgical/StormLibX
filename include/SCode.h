@@ -10,21 +10,21 @@
 DECLARE_HANDLE(HSCODESTREAM);
 
 typedef struct _SCODEEXECUTEDATA {
-  DWORD  size;
-  DWORD  flags;
+  std::uint32_t  size;
+  std::uint32_t  flags;
   int    xiterations;
   int    yiterations;
   int    adjustdest;
   int    adjustsource;
-  LPVOID dest;
-  LPVOID source;
-  LPVOID table;
-  DWORD  a;
-  DWORD  b;
-  DWORD  c;
+  void* dest;
+  void* source;
+  void* table;
+  std::uint32_t  a;
+  std::uint32_t  b;
+  std::uint32_t  c;
   int    adjustdestalt;
   int    adjustsourcealt;
-  DWORD  reserved[2];
+  std::uint32_t  reserved[2];
 } SCODEEXECUTEDATA, * SCODEEXECUTEDATAPTR;
 
 

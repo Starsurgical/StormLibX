@@ -5,7 +5,7 @@
 
 extern "C" {
   // @343
-  BOOL STORMAPI SDrawCaptureScreen(LPCSTR filename = NULL, BOOL usesavepath = FALSE);
+  BOOL STORMAPI SDrawCaptureScreen(const char* filename = NULL, BOOL usesavepath = FALSE);
 
   // @344
   BOOL STORMAPI SDrawClearSurface(int surfacenumber);
@@ -20,20 +20,20 @@ extern "C" {
   BOOL STORMAPI SDrawGetScreenSize(int* width, int* height, int* bitdepth);
 
   // @350
-  BOOL STORMAPI SDrawLockSurface(int surfacenumber, LPCRECT rect, LPBYTE* ptr, int* pitch = NULL, DWORD flags = 0);
+  BOOL STORMAPI SDrawLockSurface(int surfacenumber, LPCRECT rect, LPBYTE* ptr, int* pitch = NULL, std::uint32_t flags = 0);
 
   // @351
   //BOOL STORMAPI SDrawManualInitialize(HWND framewindow, LPDIRECTDRAW directdraw, LPDIRECTDRAWSURFACE frontbuffer, LPDIRECTDRAWSURFACE backbuffer, LPDIRECTDRAWSURFACE systembuffer, LPDIRECTDRAWSURFACE temporarybuffer);
   BOOL STORMAPI SDrawManualInitialize(HWND framewindow, void* directdraw, void* frontbuffer, void* backbuffer, void* systembuffer, void* temporarybuffer);
 
   // @352
-  int STORMAPI SDrawMessageBox(LPCSTR text, LPCSTR title, DWORD flags);
+  int STORMAPI SDrawMessageBox(const char* text, const char* title, std::uint32_t flags);
 
   // @356
-  BOOL STORMAPI SDrawUnlockSurface(int surfacenumber, LPBYTE ptr, DWORD numrects = 0, LPCRECT rectarray = NULL);
+  BOOL STORMAPI SDrawUnlockSurface(int surfacenumber, LPBYTE ptr, std::uint32_t numrects = 0, LPCRECT rectarray = NULL);
 
   // @357
-  BOOL STORMAPI SDrawUpdatePalette(DWORD firstentry, DWORD numentries, LPPALETTEENTRY entries, BOOL reservedentries = FALSE);
+  BOOL STORMAPI SDrawUpdatePalette(std::uint32_t firstentry, std::uint32_t numentries, LPPALETTEENTRY entries, BOOL reservedentries = FALSE);
 }
 
 #endif

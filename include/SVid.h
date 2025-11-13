@@ -7,9 +7,9 @@
 DECLARE_HANDLE(HSVIDEO);
 
 typedef struct _SVIDPALETTEUSE {
-  DWORD size;
-  DWORD firstentry;
-  DWORD numentries;
+  std::uint32_t size;
+  std::uint32_t firstentry;
+  std::uint32_t numentries;
 } SVIDPALETTEUSE, * SVIDPALETTEUSEPTR;
 
 
