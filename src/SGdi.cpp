@@ -2,6 +2,7 @@
 #include "SGdi.h"
 #include "SDraw.h"
 #include <vector>
+#include "SMem.h"
 
 #define SIGNATURE 0x4F4D    // 'M' 'O'
 #define TYPE_FONT 0
@@ -14,6 +15,8 @@ static BOOL s_screenbppshift;
 static std::vector<std::int32_t> s_pitchtable;
 
 static HSGDIOBJ s_selected;
+
+static STORM_LIST(SGDIOBJ) s_objectlist;
 
 
 class SGDIOBJ : public TSLinkedNode<SGDIOBJ> {
@@ -36,6 +39,14 @@ public:
 
 // @383
 BOOL STORMAPI SGdiDeleteObject(HSGDIOBJ handle) {
+  if (!handle) return FALSE;
+  if (handle->signature != SIGNATURE) return FALSE;
+  if (handle->type != TYPE_FONT) return FALSE;
+
+  if (s_selected == handle) s_selected = nullptr;
+
+  FREEPTRIFUSED(handle->bits);
+  s_objectlist.DeleteNode(handle);
   return TRUE;
 }
 
