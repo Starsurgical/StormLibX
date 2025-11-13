@@ -24,7 +24,7 @@ SDL_Palette* s_sdl_palette;
 
 
 // @342
-BOOL STORMAPI SDrawCaptureScreen(LPCTSTR filename, BOOL usesavepath) {
+BOOL STORMAPI SDrawCaptureScreen(LPCSTR filename, BOOL usesavepath) {
   return FALSE;
 }
 
@@ -165,6 +165,7 @@ BOOL STORMAPI SDrawUnlockSurface(int surfacenumber, LPBYTE ptr, DWORD numrects, 
   if (s_sdl_canvas == nullptr) return FALSE;
   if (surfacenumber != 0) return FALSE;
 
+  SDL_UnlockSurface(s_sdl_surface);
   SDL_BlitSurface(s_sdl_canvas, nullptr, s_sdl_surface, nullptr);
   return TRUE;
 }

@@ -5,7 +5,7 @@
 
 extern "C" {
   // @343
-  BOOL STORMAPI SDrawCaptureScreen(LPCTSTR filename = NULL, BOOL usesavepath = FALSE);
+  BOOL STORMAPI SDrawCaptureScreen(LPCSTR filename = NULL, BOOL usesavepath = FALSE);
 
   // @344
   BOOL STORMAPI SDrawClearSurface(int surfacenumber);
