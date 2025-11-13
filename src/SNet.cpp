@@ -264,7 +264,20 @@ BOOL STORMAPI SNetReceiveTurns(DWORD firstplayerid, DWORD arraysize, LPVOID* arr
 
 // @123
 BOOL STORMAPI SNetRegisterEventHandler(DWORD eventid, SNETEVENTPROC callback) {
-  return FALSE;
+  VALIDATEBEGIN;
+  VALIDATE(callback);
+  VALIDATEEND;
+
+  BOOL result;
+  {
+    SCOPE_LOCK(s_api_critsect);
+    result = SEvtRegisterHandler('SNET', 1, eventid, 0, reinterpret_cast<SEVTHANDLER>(callback));
+  }
+
+  if (!result) {
+    SErrSetLastError(ERROR_NOT_ENOUGH_MEMORY);
+  }
+  return result;
 }
 
 // @125
