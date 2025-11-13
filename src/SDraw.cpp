@@ -1,8 +1,13 @@
 #include "SDraw.h"
+#include "SFile.h"
 #include "SMem.h"
 
 #include <SDL.h>
+#include <SDL_image.h>
 #include <vector>
+#include <filesystem>
+#include <ctime>
+
 
 HWND s_framewindow;
 void* s_lpdd;
@@ -25,7 +30,18 @@ SDL_Palette* s_sdl_palette;
 
 // @342
 BOOL STORMAPI SDrawCaptureScreen(LPCSTR filename, BOOL usesavepath) {
-  return FALSE;
+  char genFilename[MAX_PATH] = {};
+  if (!filename) {
+    auto time = std::time(nullptr);
+    std::strftime(genFilename, sizeof(genFilename), "SCScrnShot_%m%d%y_%H%M%S", std::localtime(&time));
+    filename = genFilename;
+  }
+
+  char dataPath[MAX_PATH];
+  SFileGetUserDataPath(dataPath, sizeof(dataPath), TRUE);
+  SStrPack(dataPath, filename, STORM_MAX_STR);
+
+  return IMG_SavePNG(s_sdl_surface, usesavepath ? filename : dataPath) == 0;
 }
 
 // @344

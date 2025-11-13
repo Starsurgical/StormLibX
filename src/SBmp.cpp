@@ -142,12 +142,10 @@ BOOL STORMAPI SBmpSaveImageEx(LPCSTR filename, LPPALETTEENTRY paletteentries, LP
   BOOL result = FALSE;
   
   if (extension == ".png") {
-    IMG_SavePNG(surface, filename);
-    result = TRUE;
+    result = IMG_SavePNG(surface, filename) == 0;
   }
   else if (extension == ".bmp") {
-    SDL_SaveBMP(surface, filename);
-    result = TRUE;
+    result = SDL_SaveBMP(surface, filename) == 0;
   }
 
   SDL_FreeSurface(surface);
