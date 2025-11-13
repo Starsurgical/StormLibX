@@ -102,5 +102,25 @@ BOOL STORMAPI SGdiSetTargetDimensions(int width, int height, int bitdepth, int p
 
 // @393
 BOOL STORMAPI SGdiGetTextExtent(const char* string, int chars, LPSIZE size) {
+  if (size) {
+    size->cx = 0;
+    size->cy = 0;
+  }
+  STORM_VALIDATE_BEGIN;
+  STORM_VALIDATE(string);
+  STORM_VALIDATE(size);
+  STORM_VALIDATE_END;
+
+  HSGDIFONT font = static_cast<HSGDIFONT>(s_selected);
+  if (!font) return FALSE;
+
+  if (chars < 0) {
+    chars = SStrLen(string);
+  }
+
+  for (int i = 0; i < chars; i++) {
+    size->cx += font->charsize[string[i]].cx;
+    size->cy = std::max(size->cy, font->charsize[string[i]].cy);
+  }
   return TRUE;
 }
