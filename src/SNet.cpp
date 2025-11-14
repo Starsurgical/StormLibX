@@ -331,7 +331,35 @@ BOOL STORMAPI SNetGetNumPlayers(std::uint32_t* firstplayerid, std::uint32_t* las
 
 // @112
 BOOL STORMAPI SNetGetPlayerCaps(std::uint32_t playerid, SNETCAPSPTR caps) {
-  return FALSE;
+  VALIDATEBEGIN;
+  VALIDATE(caps && caps->size == sizeof(SNETCAPS));
+  VALIDATEEND;
+
+  SCOPE_LOCK(s_api_critsect);
+
+  *caps = { sizeof(SNETCAPS) };
+
+  if (!s_spi || !s_spi_providerptr) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  if (s_game_playerid == -1) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  CONNREC *conn = ConnFindByPlayerId(playerid - s_api_playeroffset);
+  if (!conn) {
+    SErrSetLastError(STORM_ERROR_INVALID_PLAYER);
+    return FALSE;
+  }
+
+  *caps = s_spi_providerptr->caps;
+  if (conn->latency) {
+    caps->latencyms = conn->latency;
+  }
+  return TRUE;
 }
 
 // @113
