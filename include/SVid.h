@@ -4,7 +4,9 @@
 #include "StormTypes.h"
 
 
-DECLARE_HANDLE(HSVIDEO);
+class VIDEOREC;
+typedef VIDEOREC* VIDEOPTR;
+
 
 typedef struct _SVIDPALETTEUSE {
   std::uint32_t size;
@@ -40,7 +42,27 @@ typedef struct _SVIDPALETTEUSE {
 #define SVID_QUALITY_HIGH_SKIPSCANS      (SVID_FLAG_2XSIZE | SVID_FLAG_INTERPOLATE)
 #define SVID_QUALITY_HIGH                (SVID_FLAG_2XSIZE | SVID_FLAG_INTERPOLATE | SVID_FLAG_DOUBLESCANS)
 
-extern "C" {
-}
+
+// @451
+BOOL STORMAPI SVidDestroy();
+
+// @452
+BOOL STORMAPI SVidGetSize(VIDEOPTR video, int32_t *width, int32_t *height, int32_t *bitdepth = NULL);
+
+// @453
+BOOL STORMAPI SVidInitialize(void* directsound);
+
+// @454
+BOOL STORMAPI SVidPlayBegin(const char* filename, void* destbuffer, const RECT* destrect, SIZE* destsize, SVIDPALETTEUSEPTR paletteuse, uint32_t flags, HSVIDEO *handle);
+
+// @455
+BOOL STORMAPI SVidPlayBeginFromMemory(const void *sourceptr, uint32_t sourcebytes, void* destbuffer, const RECT* destrect, SIZE* destsize, SVIDPALETTEUSEPTR paletteuse, uint32_t flags, HSVIDEO *handle);
+
+// @457
+BOOL STORMAPI SVidPlayContinueSingle(VIDEOPTR video, BOOL forceupdate = FALSE, BOOL *updated = NULL);
+
+// @458
+BOOL STORMAPI SVidPlayEnd(VIDEOPTR video);
+
 
 #endif
