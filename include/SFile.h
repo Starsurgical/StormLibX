@@ -21,13 +21,16 @@ typedef BOOL(STORMAPI* SFILEERRORPROC)(const char*, std::uint32_t, std::uint32_t
 
 extern "C" {
 
+  // @251
+  BOOL STORMAPI SFileAuthenticateArchive(HSARCHIVE handle, uint32_t* extendedresult);
+
   // @252
   BOOL STORMAPI SFileCloseArchive(HSARCHIVE handle);
 
   // @253
   BOOL STORMAPI SFileCloseFile(HSFILE handle);
 
-  /*
+  /* TODO
   // @254
   BOOL STORMAPI SFileDdaBegin(HSFILE handle, std::uint32_t buffersize, std::uint32_t flags);
 
@@ -77,17 +80,11 @@ extern "C" {
   // @269
   BOOL STORMAPI SFileReadFile(HSFILE handle, void* buffer, std::uint32_t bytestoread, unsigned long* bytesread = NULL, LPOVERLAPPED overlapped = NULL);
 
-  // @270
-  //BOOL STORMAPI SFileSetBasePath(const char* path);
-
   // @271
   std::uint32_t SFileSetFilePointer(HSFILE handle, std::int32_t lDistanceToMove, long* lDistanceToMoveHigh, std::uint32_t dwMoveMethod);
 
   // @272
   BOOL STORMAPI SFileSetLocale(LCID lcid);
-
-  // @273
-  //BOOL STORMAPI SFileGetBasePath(char* buffer, std::uint32_t bufferchars);
 
   // @274
   BOOL STORMAPI SFileSetIoErrorMode(std::uint32_t errormode, SFILEERRORPROC errorproc = NULL);
@@ -113,41 +110,11 @@ extern "C" {
   // @281
   BOOL STORMAPI SFileLoadFileEx(HSARCHIVE hArchive, const char* filename, void** buffer, std::uint32_t* buffersize, std::uint32_t extrasize, std::uint32_t searchScope, struct _OVERLAPPED* lpOverlapped);
 
-  // @282
-  //void STORMAPI SFilePrioritizeRequest(int,int);
-
-  // @283
-  //void STORMAPI SFileCancelRequest(int);
-
   // @284
   void STORMAPI SFileSetAsyncBudget(std::uint32_t budget);
 
   // @285
   void STORMAPI SFileSetDataChunkSize(std::uint32_t chunksize);
-
-  // @286
-  //BOOL STORMAPI SFileEnableSeekOptimization();
-
-  // @287
-  //BOOL STORMAPI SFileReadFileEx();
-
-  // @288
-  //BOOL STORMAPI SFileFileExists();
-
-  // @289
-  //BOOL STORMAPI SFileFileExistsEx();
-
-  // @290
-  //BOOL STORMAPI SFileReadFileEx2();
-
-  // @291
-  //BOOL STORMAPI SFileReadFile2();
-
-  // @292
-  //BOOL STORMAPI SFileLoadFile2();
-
-  // @293
-  //BOOL STORMAPI SFileOpenFileAsArchive();
 
   // @294
   LCID STORMAPI SFileGetLocale();

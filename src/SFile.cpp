@@ -32,6 +32,12 @@ char s_savepath[MAX_PATH];
 
 std::map<HSFILE, HSARCHIVE> s_filearchives;
 
+
+// @251
+BOOL STORMAPI SFileAuthenticateArchive(HSARCHIVE handle, uint32_t* extendedresult) {
+  return FALSE;
+}
+
 // @252
 BOOL STORMAPI SFileCloseArchive(HSARCHIVE handle) {
   for (auto& it = s_filearchives.begin(); it != s_filearchives.end(); ) {
