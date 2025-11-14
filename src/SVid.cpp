@@ -65,7 +65,7 @@ BOOL STORMAPI SVidDestroy() {
 }
 
 // @452
-BOOL STORMAPI SVidGetSize(VIDEOPTR video, int32_t *width, int32_t *height, int32_t *bitdepth = NULL) {
+BOOL STORMAPI SVidGetSize(VIDEOPTR video, int32_t *width, int32_t *height, int32_t *bitdepth) {
   return TRUE;
 }
 
@@ -76,17 +76,17 @@ BOOL STORMAPI SVidInitialize(void* directsound) {
 }
 
 // @454
-BOOL STORMAPI SVidPlayBegin(const char* filename, void* destbuffer, const RECT* destrect, SIZE* destsize, SVIDPALETTEUSEPTR paletteuse, uint32_t flags, HSVIDEO *handle) {
+BOOL STORMAPI SVidPlayBegin(const char* filename, void* destbuffer, const RECT* destrect, SIZE* destsize, SVIDPALETTEUSEPTR paletteuse, uint32_t flags, VIDEOPTR *handle) {
   return FALSE;
 }
 
 // @455
-BOOL STORMAPI SVidPlayBeginFromMemory(const void *sourceptr, uint32_t sourcebytes, void* destbuffer, const RECT* destrect, SIZE* destsize, SVIDPALETTEUSEPTR paletteuse, uint32_t flags, HSVIDEO *handle) {
+BOOL STORMAPI SVidPlayBeginFromMemory(const void *sourceptr, uint32_t sourcebytes, void* destbuffer, const RECT* destrect, SIZE* destsize, SVIDPALETTEUSEPTR paletteuse, uint32_t flags, VIDEOPTR *handle) {
   return FALSE;
 }
 
 // @457
-BOOL STORMAPI SVidPlayContinueSingle(VIDEOPTR video, BOOL forceupdate = FALSE, BOOL *updated = NULL) {
+BOOL STORMAPI SVidPlayContinueSingle(VIDEOPTR video, BOOL forceupdate, BOOL *updated) {
   return FALSE;
 }
 

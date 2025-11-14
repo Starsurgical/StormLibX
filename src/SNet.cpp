@@ -27,10 +27,6 @@ caps.dat
   }[]; // repeats for the number of providers
 */
 
-struct SNETADDR {
-  uint8_t address[16];
-};
-
 struct HEADER
 {
   uint16_t checksum;
@@ -104,6 +100,27 @@ struct _PLAYERNAME {
   char name[128];
 };
 
+static std::recursive_mutex s_api_critsect;
+
+static SNETSPIPTR s_spi;
+static std::vector<PROVIDERINFO> s_spi_providerlist;
+static PROVIDERINFO* s_spi_providerptr;
+static int s_api_playeroffset;
+
+static CODEVERIFYPROC s_verify_fn;
+
+static char s_game_playerid = -1;
+static std::thread s_recv_thread;
+static std::atomic_bool s_recv_shutdown;
+static HANDLE s_recv_event;  // FIXME: move off Windows
+
+static uint32_t s_game_optcategorybits;
+static uint32_t s_game_programid;
+static uint32_t s_game_versionid;
+
+static STORM_LIST(CONNREC) s_conn_local;
+static STORM_LIST(CONNREC) s_conn_connlist;
+
 static std::vector<_PLAYERNAME> s_game_playernames;
 
 static void GameSetPlayerName(unsigned int id, const char *name) {
@@ -136,27 +153,6 @@ static CONNREC* ConnFindByPlayerId(unsigned int playerid) {
 }
 
 namespace {
-  std::recursive_mutex s_api_critsect;
-
-  SNETSPIPTR s_spi;
-  std::vector<PROVIDERINFO> s_spi_providerlist;
-  PROVIDERINFO* s_spi_providerptr;
-  int s_api_playeroffset;
-
-  CODEVERIFYPROC s_verify_fn;
-
-  char s_game_playerid = -1;
-  std::thread s_recv_thread;
-  std::atomic_bool s_recv_shutdown;
-  HANDLE s_recv_event;  // FIXME: move off Windows
-
-  uint32_t s_game_optcategorybits;
-  uint32_t s_game_programid;
-  uint32_t s_game_versionid;
-
-  STORM_LIST(CONNREC) s_conn_local;
-  STORM_LIST(CONNREC) s_conn_connlist;
-
 
   int STORMAPI SMessageBox(HWND hWnd, const char* lpText, const char* lpCaption, UINT uType) {
     return SDrawMessageBox(lpText, lpCaption, uType);

@@ -53,10 +53,10 @@ BOOL STORMAPI SVidGetSize(VIDEOPTR video, int32_t *width, int32_t *height, int32
 BOOL STORMAPI SVidInitialize(void* directsound);
 
 // @454
-BOOL STORMAPI SVidPlayBegin(const char* filename, void* destbuffer, const RECT* destrect, SIZE* destsize, SVIDPALETTEUSEPTR paletteuse, uint32_t flags, HSVIDEO *handle);
+BOOL STORMAPI SVidPlayBegin(const char* filename, void* destbuffer, const RECT* destrect, SIZE* destsize, SVIDPALETTEUSEPTR paletteuse, uint32_t flags, VIDEOPTR *handle);
 
 // @455
-BOOL STORMAPI SVidPlayBeginFromMemory(const void *sourceptr, uint32_t sourcebytes, void* destbuffer, const RECT* destrect, SIZE* destsize, SVIDPALETTEUSEPTR paletteuse, uint32_t flags, HSVIDEO *handle);
+BOOL STORMAPI SVidPlayBeginFromMemory(const void *sourceptr, uint32_t sourcebytes, void* destbuffer, const RECT* destrect, SIZE* destsize, SVIDPALETTEUSEPTR paletteuse, uint32_t flags, VIDEOPTR *handle);
 
 // @457
 BOOL STORMAPI SVidPlayContinueSingle(VIDEOPTR video, BOOL forceupdate = FALSE, BOOL *updated = NULL);
