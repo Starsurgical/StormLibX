@@ -497,6 +497,13 @@ BOOL STORMAPI SNetSendTurn(void* data, std::uint32_t databytes) {
   return FALSE;
 }
 
+// @129
+BOOL STORMAPI SNetSetBasePlayer(int playerid) {
+  SCOPE_LOCK(s_api_critsect);
+  s_api_playeroffset = playerid;
+  return TRUE;
+}
+
 // @130
 BOOL STORMAPI SNetSetGameMode(std::uint32_t modeflags) {
   return FALSE;

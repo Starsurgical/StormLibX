@@ -360,6 +360,9 @@ extern "C" {
   // @128
   BOOL STORMAPI SNetSendTurn(void* data, std::uint32_t databytes);
 
+  // @129
+  BOOL STORMAPI SNetSetBasePlayer(int playerid);
+
   // @130
   BOOL STORMAPI SNetSetGameMode(std::uint32_t modeflags);
 
