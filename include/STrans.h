@@ -3,9 +3,8 @@
 
 #include "StormTypes.h"
 
-DECLARE_HANDLE(HSTRANS);
 
-extern "C" {
-}
+// Move to squall
+
 
 #endif

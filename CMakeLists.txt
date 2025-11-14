@@ -48,7 +48,6 @@ set(SRC_FILES
           src/SMsg.cpp
           src/SNet.cpp
           src/SReg.cpp
-          src/STrans.cpp
           src/SUni.cpp
           src/SVid.cpp
           src/Storm.cpp
