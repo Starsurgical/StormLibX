@@ -6,8 +6,10 @@
 
 #include <SDL.h>
 
+#include <atomic>
 #include <filesystem>
 #include <mutex>
+#include <thread>
 #include <vector>
 
 #define CONCAT(a, b) CONCAT_INNER(a, b)
@@ -25,16 +27,78 @@ caps.dat
   }[]; // repeats for the number of providers
 */
 
-namespace {
-  struct PROVIDERINFO {
-    char     filename[MAX_PATH];
-    std::uint32_t    index;
-    std::uint32_t    id;
-    char     desc[SNETSPI_MAXSTRINGLENGTH];
-    char     req[SNETSPI_MAXSTRINGLENGTH];
-    SNETCAPS caps;
-  };
+struct SNETADDR {
+  uint8_t address[16];
+};
 
+struct HEADER
+{
+  uint16_t checksum;
+  uint16_t bytes;
+  uint16_t sequence;
+  uint16_t acksequence;
+  uint8_t  type;
+  uint8_t  subtype;
+  uint8_t  playerid;
+  uint8_t  flags;
+};
+
+typedef struct PACKET
+{
+  HEADER header;
+  BYTE data[];
+} *PACKETPTR;
+
+struct MESSAGE : TSLinkedNode<MESSAGE>
+{
+  SNETADDRPTR addr;
+  PACKETPTR data;
+  DWORD databytes;
+  BOOL local;
+  DWORD sendtime;
+  DWORD resendtime;
+};
+
+struct CONNREC : TSLinkedNode<CONNREC>
+{
+  char name[128];
+  char desc[128];
+  SNETADDR addr;
+  DWORD flags;
+  DWORD lastreceivetime;
+  DWORD lastrequesttime;
+  DWORD lastpingtime;
+  DWORD latency;
+  DWORD peaklatency;
+  STORM_LIST(MESSAGE) outgoingqueue[4];
+  STORM_LIST(MESSAGE) incomingqueue[4];
+  STORM_LIST(MESSAGE) processing[4];
+  STORM_LIST(MESSAGE) oldturns;
+  WORD outgoingsequence[4];
+  WORD incomingsequence[4];
+  WORD lastprocessedturn;
+  WORD availablesequence[4];
+  WORD acksequence[4];
+  DWORD acktime[4];
+  BOOL gameowner;
+  BOOL establishing;
+  DWORD exitcode;
+  uint32_t finalsequence;
+  uint16_t unk;
+  char field_212;
+  char field_213;
+};
+
+struct PROVIDERINFO {
+  char     filename[MAX_PATH];
+  std::uint32_t    index;
+  std::uint32_t    id;
+  char     desc[SNETSPI_MAXSTRINGLENGTH];
+  char     req[SNETSPI_MAXSTRINGLENGTH];
+  SNETCAPS caps;
+};
+
+namespace {
   std::recursive_mutex s_api_critsect;
 
   SNETSPIPTR s_spi;
@@ -44,6 +108,15 @@ namespace {
   CODEVERIFYPROC s_verify_fn;
 
   char s_game_playerid = -1;
+  std::thread s_recv_thread;
+  std::atomic_bool s_recv_shutdown;
+  HANDLE s_recv_event;  // FIXME: move off Windows
+
+  uint32_t s_game_optcategorybits;
+  uint32_t s_game_programid;
+  uint32_t s_game_versionid;
+
+  STORM_LIST(CONNREC) s_conn_connlist;
 
 
   int STORMAPI SMessageBox(HWND hWnd, const char* lpText, const char* lpCaption, UINT uType) {
@@ -88,6 +161,39 @@ namespace {
     versiondataout->size = sizeof(SNETVERSIONDATA);
     return TRUE;
   }
+
+  void RecvThreadProc() {
+    int timeout = -1;
+    while (!s_recv_shutdown) {
+      BOOL v2 = !WaitForSingleObject(s_recv_event, timeout);  // FIXME: remove Windows dep
+      if (s_recv_shutdown) break;
+
+      SCOPE_LOCK(s_api_critsect);
+
+      if (!s_spi) break;
+
+      if (v2) {
+        //RecvProcessExternalMessages();
+        //RecvProcessIncomingPackets();
+      }
+
+      //timeout = ConnMaintainConnections();
+    }
+  }
+
+  BOOL RecvInitialize(HANDLE* eventptr) {
+    if (!s_recv_event) {
+      s_recv_event = CreateEvent(nullptr, 0, 0, nullptr);
+    }
+
+    if (!s_recv_thread.joinable()) {
+      s_recv_shutdown = false;
+      s_recv_thread = std::thread(RecvThreadProc);
+    }
+
+    if (eventptr) *eventptr = s_recv_event;
+    return s_recv_event && s_recv_thread.joinable();
+  }
 }
 
 // @101
@@ -105,33 +211,28 @@ BOOL STORMAPI SNetDestroy() {
     }
   }
 
-/*
-  if (s_recv_thread) {
-    s_recv_shutdown = 1;
+  if (s_recv_thread.joinable()) {
+    s_recv_shutdown = true;
     SetEvent(s_recv_event);
-    WaitForSingleObject(s_recv_thread, -1);
-    s_recv_shutdown = 0;
-    CloseHandle(s_recv_thread);
-    s_recv_thread = 0;
+    s_recv_thread.join();
+    s_recv_shutdown = false;
   }
-*/
 
+  SCOPE_LOCK(s_api_critsect);
+
+  //SysDestroy();
+  SEvtUnregisterType('SNET', 1);
+  SEvtUnregisterType('SNET', 2);
+  /*ConnDestroy();
+  dword_1506B850 = 0;
+  SpiDestroy(1);*/
+  if ( s_recv_event )
   {
-    SCOPE_LOCK(s_api_critsect);
-    //SysDestroy();
-    SEvtUnregisterType('SNET', 1);
-    SEvtUnregisterType('SNET', 2);
-    /*ConnDestroy();
-    dword_1506B850 = 0;
-    SpiDestroy(1);
-    if ( s_recv_event )
-    {
-      CloseHandle(s_recv_event);
-      s_recv_event = 0;
-    }
-    s_game_programid = 0;
-    s_game_versionid = 0;*/
+    CloseHandle(s_recv_event);
+    s_recv_event = 0;
   }
+  s_game_programid = 0;
+  s_game_versionid = 0;
   return TRUE;
 }
 
@@ -312,7 +413,24 @@ BOOL STORMAPI SNetSendServerChatCommand(const char* command) {
 
 // @137
 BOOL STORMAPI SNetDisconnectAll(std::uint32_t flags) {
-  return FALSE;
+  SCOPE_LOCK(s_api_critsect);
+
+  if (!s_spi) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  if (s_game_playerid == -1) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  for (CONNREC *conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
+    conn->flags |= 8;
+    conn->unk = conn->incomingsequence[2];
+    conn->finalsequence = flags;
+  }
+  return TRUE;
 }
 
 // @138
