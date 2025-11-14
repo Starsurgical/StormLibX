@@ -3,7 +3,8 @@
 
 #include "storm/Unicode.hpp"
 
-extern "C" {
-}
+
+// Move to squall
+
 
 #endif
