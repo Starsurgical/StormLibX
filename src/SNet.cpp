@@ -2,11 +2,13 @@
 #include <storm/Event.hpp>
 #include "SErr.h"
 #include "SNet.h"
+#include "SMem.h"
 #include "SDraw.h"
 
 #include <SDL.h>
 
 #include <atomic>
+#include <chrono>
 #include <filesystem>
 #include <mutex>
 #include <thread>
@@ -82,7 +84,7 @@ struct CONNREC : TSLinkedNode<CONNREC>
   uint32_t finalsequence;
   uint16_t unk;
   uint8_t playerid;
-  char field_213;
+  uint8_t oldplayerid;
 };
 
 struct PROVIDERINFO {
@@ -100,6 +102,19 @@ struct _PLAYERNAME {
   char name[128];
 };
 
+struct USEREVENT : TSLinkedNode<USEREVENT> {
+  SNETEVENT event;
+} *USEREVENTPTR;
+
+typedef struct _SYSEVENT {
+  SNETADDRPTR senderaddr;
+  void*       data;
+  uint32_t    databytes;
+  uint8_t     senderplayerid;
+  uint8_t     eventid;
+} SYSEVENT, *SYSEVENTPTR;
+
+
 static std::recursive_mutex s_api_critsect;
 
 static SNETSPIPTR s_spi;
@@ -107,7 +122,7 @@ static std::vector<PROVIDERINFO> s_spi_providerlist;
 static PROVIDERINFO* s_spi_providerptr;
 static int s_api_playeroffset;
 
-static CODEVERIFYPROC s_verify_fn;
+static CODEVERIFYPROC s_CodeSignFunc;
 
 static char s_game_playerid = -1;
 static std::thread s_recv_thread;
@@ -123,6 +138,11 @@ static STORM_LIST(CONNREC) s_conn_connlist;
 
 static std::vector<_PLAYERNAME> s_game_playernames;
 
+
+static uint32_t PortGetTickCount() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
 static void GameSetPlayerName(unsigned int id, const char *name) {
   STORM_VALIDATE_BEGIN;
   STORM_VALIDATE(id < 256);
@@ -133,6 +153,23 @@ static void GameSetPlayerName(unsigned int id, const char *name) {
   }
 
   SStrCopy(s_game_playernames[id].name, name, sizeof(_PLAYERNAME::name));
+}
+
+static void ConnAssignPlayerId(CONNREC* conn, BYTE playerid) {
+  conn->oldplayerid = -1;
+  conn->playerid = playerid;
+  
+  for (CONNREC* curr = s_conn_local.Head(); curr; curr = curr->Next()) {
+    if (curr->oldplayerid == playerid) {
+      curr->oldplayerid = -1;
+    }
+  }
+  
+  for (CONNREC* curr = s_conn_connlist.Head(); curr; curr = curr->Next()) {
+    if (curr->oldplayerid == playerid) {
+      curr->oldplayerid = -1;
+    }
+  }
 }
 
 static CONNREC* ConnFindByPlayerId(unsigned int playerid) {
@@ -152,83 +189,185 @@ static CONNREC* ConnFindByPlayerId(unsigned int playerid) {
   return nullptr;
 }
 
-namespace {
+static CONNREC* ConnFindByOldPlayerId(unsigned int playerid) {
+  if (playerid == 255) return nullptr;
 
-  int STORMAPI SMessageBox(HWND hWnd, const char* lpText, const char* lpCaption, UINT uType) {
-    return SDrawMessageBox(lpText, lpCaption, uType);
-  }
-
-  BOOL SpiNormalizeDataBlocks(
-    SNETPROGRAMDATAPTR programdatain,
-    SNETPLAYERDATAPTR playerdatain,
-    SNETUIDATAPTR interfacedatain,
-    SNETVERSIONDATAPTR versiondatain,
-    SNETPROGRAMDATAPTR programdataout,
-    SNETPLAYERDATAPTR playerdataout,
-    SNETUIDATAPTR interfacedataout,
-    SNETVERSIONDATAPTR versiondataout) {
-
-    *programdataout = *programdatain;
-    programdataout->size = sizeof(SNETPROGRAMDATA);
-    if (!programdataout->programname) programdataout->programname = "";
-
-    if (!programdataout->programdescription) {
-      programdataout->programdescription = "";  // TODO program description
-    }
-
-    if (!programdataout->cdkey) programdataout->cdkey = "";
-
-    *playerdataout = *playerdatain;
-    playerdataout->size = sizeof(SNETPLAYERDATA);
-    if (!playerdataout->playername) playerdataout->playername = "";
-    if (!playerdataout->playerdescription) playerdataout->playerdescription = "";
-
-    *interfacedataout = *interfacedatain;
-    interfacedataout->size = sizeof(INTERFACEDATA);
-    if (!interfacedataout->parentwindow) {
-      interfacedataout->parentwindow = SDrawGetFrameWindow();
-    }
-    if (!interfacedataout->messageboxcallback) {
-      interfacedataout->messageboxcallback = SMessageBox;
-    }
-
-    *versiondataout = *versiondatain;
-    versiondataout->size = sizeof(SNETVERSIONDATA);
-    return TRUE;
-  }
-
-  void RecvThreadProc() {
-    int timeout = -1;
-    while (!s_recv_shutdown) {
-      BOOL v2 = !WaitForSingleObject(s_recv_event, timeout);  // FIXME: remove Windows dep
-      if (s_recv_shutdown) break;
-
-      SCOPE_LOCK(s_api_critsect);
-
-      if (!s_spi) break;
-
-      if (v2) {
-        //RecvProcessExternalMessages();
-        //RecvProcessIncomingPackets();
-      }
-
-      //timeout = ConnMaintainConnections();
+  for (CONNREC* curr = s_conn_local.Head(); curr; curr = curr->Next()) {
+    if (curr->oldplayerid == playerid && curr->playerid == -1) {
+      return curr;
     }
   }
 
-  BOOL RecvInitialize(HANDLE* eventptr) {
-    if (!s_recv_event) {
-      s_recv_event = CreateEvent(nullptr, 0, 0, nullptr);
+  for (CONNREC* curr = s_conn_connlist.Head(); curr; curr = curr->Next()) {
+    if (curr->oldplayerid == playerid && curr->playerid == -1) {
+      return curr;
     }
-
-    if (!s_recv_thread.joinable()) {
-      s_recv_shutdown = false;
-      s_recv_thread = std::thread(RecvThreadProc);
-    }
-
-    if (eventptr) *eventptr = s_recv_event;
-    return s_recv_event && s_recv_thread.joinable();
   }
+  return nullptr;
+}
+
+static CONNREC* ConnAddRec(STORM_LIST(CONNREC)* list, SNETADDRPTR addr) {
+  CONNREC *newconn = list->NewNode(STORM_LIST_TAIL, 0, 0);
+  newconn->addr = *addr;
+  newconn->playerid = -1;
+  newconn->oldplayerid = -1;
+  newconn->lastreceivetime = PortGetTickCount();
+  return newconn;
+}
+
+static CONNREC* ConnFindByAddr(SNETADDRPTR addr) {
+  for (CONNREC *curr = s_conn_connlist.Head(); curr; curr = curr->Next()) {
+    if (memcmp(&curr->addr, addr, sizeof(SNETADDR)) == 0) {
+      return curr;
+    }
+  }
+  return ConnAddRec(&s_conn_connlist, addr);
+}
+
+static CONNREC* ConnFindLocal() {
+  if (!s_conn_local.IsEmpty()) {
+    return s_conn_local.Head();
+  }
+
+  SNETADDR addr = {};
+  return ConnAddRec(&s_conn_local, &addr);
+}
+
+uint16_t PktComputeChecksum(void* data, uint32_t databytes) {
+  uint32_t checkval1 = 0;
+  uint32_t checkval2 = 0;
+
+  uint8_t *ptr = static_cast<uint8_t*>(data);
+  while (databytes--) {
+    checkval1 += ptr[databytes];
+    if (checkval1 >= 255) checkval1 -= 255;
+    checkval2 += checkval1;
+  }
+  return (uint8_t(checkval1) << 8) | uint8_t(checkval2 + checkval2 / 255);
+}
+
+uint16_t PktGenerateChecksum(PACKET* pkt) {
+  uint16_t chk = PktComputeChecksum(&pkt->header.bytes, pkt->header.bytes - 2);
+  uint8_t hibyte = 255 - chk % 255;
+  uint8_t lobyte = 255 - hibyte % 255;
+  return (hibyte << 8) | lobyte;
+}
+
+static void PktFreeLocalMessage(SNETADDRPTR addr, PACKETPTR data) {
+  if (addr) delete addr;
+  FREEIFUSED(data);
+}
+
+static void ConnDestroyQueue(STORM_LIST(MESSAGE)* queue) {
+  while (MESSAGE *currmsg = queue->Head()) {
+    if (currmsg->local) {
+      PktFreeLocalMessage(currmsg->addr, currmsg->data);
+    }
+    else if (s_spi) {
+      s_spi->spiFree(currmsg->addr, currmsg->data, currmsg->databytes);
+    }
+    queue->DeleteNode(currmsg);
+  }
+}
+
+static void ConnFree(CONNREC *conn) {
+  for (int i = 0; i < 4; i++) {
+    ConnDestroyQueue(&conn->outgoingqueue[i]);
+    ConnDestroyQueue(&conn->incomingqueue[i]);
+    ConnDestroyQueue(&conn->processing[i]);
+  }
+  ConnDestroyQueue(&conn->oldturns);
+  delete conn;
+}
+
+static void ConnDestroy() {
+  while (CONNREC* curr = s_conn_local.Head()) {
+    ConnFree(curr);
+  }
+
+  while (CONNREC* curr = s_conn_connlist.Head()) {
+    ConnFree(curr);
+  }
+}
+
+static int STORMAPI SMessageBox(HWND hWnd, const char* lpText, const char* lpCaption, UINT uType) {
+  return SDrawMessageBox(lpText, lpCaption, uType);
+}
+
+static void STORMAPI SysOnPlayerJoinReject(SYSEVENTPTR event) {
+  // intentionally empty
+}
+
+static BOOL SpiNormalizeDataBlocks(
+  SNETPROGRAMDATAPTR programdatain,
+  SNETPLAYERDATAPTR playerdatain,
+  SNETUIDATAPTR interfacedatain,
+  SNETVERSIONDATAPTR versiondatain,
+  SNETPROGRAMDATAPTR programdataout,
+  SNETPLAYERDATAPTR playerdataout,
+  SNETUIDATAPTR interfacedataout,
+  SNETVERSIONDATAPTR versiondataout) {
+
+  *programdataout = *programdatain;
+  programdataout->size = sizeof(SNETPROGRAMDATA);
+  if (!programdataout->programname) programdataout->programname = "";
+
+  if (!programdataout->programdescription) {
+    programdataout->programdescription = "";  // TODO program description
+  }
+
+  if (!programdataout->cdkey) programdataout->cdkey = "";
+
+  *playerdataout = *playerdatain;
+  playerdataout->size = sizeof(SNETPLAYERDATA);
+  if (!playerdataout->playername) playerdataout->playername = "";
+  if (!playerdataout->playerdescription) playerdataout->playerdescription = "";
+
+  *interfacedataout = *interfacedatain;
+  interfacedataout->size = sizeof(INTERFACEDATA);
+  if (!interfacedataout->parentwindow) {
+    interfacedataout->parentwindow = SDrawGetFrameWindow();
+  }
+  if (!interfacedataout->messageboxcallback) {
+    interfacedataout->messageboxcallback = SMessageBox;
+  }
+
+  *versiondataout = *versiondatain;
+  versiondataout->size = sizeof(SNETVERSIONDATA);
+  return TRUE;
+}
+
+static void RecvThreadProc() {
+  int timeout = -1;
+  while (!s_recv_shutdown) {
+    BOOL v2 = !WaitForSingleObject(s_recv_event, timeout);  // FIXME: remove Windows dep
+    if (s_recv_shutdown) break;
+
+    SCOPE_LOCK(s_api_critsect);
+
+    if (!s_spi) break;
+
+    if (v2) {
+      //RecvProcessExternalMessages();
+      //RecvProcessIncomingPackets();
+    }
+
+    //timeout = ConnMaintainConnections();
+  }
+}
+
+static BOOL RecvInitialize(HANDLE* eventptr) {
+  if (!s_recv_event) {
+    s_recv_event = CreateEvent(nullptr, 0, 0, nullptr);
+  }
+
+  if (!s_recv_thread.joinable()) {
+    s_recv_shutdown = false;
+    s_recv_thread = std::thread(RecvThreadProc);
+  }
+
+  if (eventptr) *eventptr = s_recv_event;
+  return s_recv_event && s_recv_thread.joinable();
 }
 
 // @101
@@ -258,9 +397,9 @@ BOOL STORMAPI SNetDestroy() {
   //SysDestroy();
   SEvtUnregisterType('SNET', 1);
   SEvtUnregisterType('SNET', 2);
-  /*ConnDestroy();
-  dword_1506B850 = 0;
-  SpiDestroy(1);*/
+  ConnDestroy();
+  s_game_playernames.clear();
+  //SpiDestroy(1);
   if ( s_recv_event )
   {
     CloseHandle(s_recv_event);
@@ -678,5 +817,5 @@ std::uint32_t STORMAPI SNetGetCurrentProviderID() {
 
 // @148
 void SNetSetCodeSignVerifcationFunction(CODEVERIFYPROC verifyfn) {
-  s_verify_fn = verifyfn;
+  s_CodeSignFunc = verifyfn;
 }
