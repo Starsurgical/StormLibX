@@ -348,6 +348,9 @@ extern "C" {
   // @123
   BOOL STORMAPI SNetRegisterEventHandler(std::uint32_t eventid, SNETEVENTPROC callback);
 
+  // @124
+  BOOL STORMAPI SNetResetLatencyMeasurements();
+
   // @125
   BOOL STORMAPI SNetSelectGame(std::uint32_t flags, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata, std::uint32_t* playerid);
 
