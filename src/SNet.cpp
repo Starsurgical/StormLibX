@@ -85,16 +85,18 @@ struct CONNREC : TSLinkedNode<CONNREC>
   DWORD exitcode;
   uint32_t finalsequence;
   uint16_t unk;
-  char field_212;
+  uint8_t playerid;
   char field_213;
 };
 
 struct PROVIDERINFO {
   char     filename[MAX_PATH];
-  std::uint32_t    index;
-  std::uint32_t    id;
+  uint32_t index;
+  uint32_t id;
   char     desc[SNETSPI_MAXSTRINGLENGTH];
   char     req[SNETSPI_MAXSTRINGLENGTH];
+  uint32_t field_20C;
+  uint32_t field_210;
   SNETCAPS caps;
 };
 
@@ -116,12 +118,30 @@ static void GameSetPlayerName(unsigned int id, const char *name) {
   SStrCopy(s_game_playernames[id].name, name, sizeof(_PLAYERNAME::name));
 }
 
+static CONNREC* ConnFindByPlayerId(unsigned int playerid) {
+  if (playerid == 255) return nullptr;
+
+  for (CONNREC* curr = s_conn_local.Head(); curr; curr = curr->Next()) {
+    if (curr->playerid == playerid) {
+      return curr;
+    }
+  }
+
+  for (CONNREC* curr = s_conn_connlist.Head(); curr; curr = curr->Next()) {
+    if (curr->playerid == playerid) {
+      return curr;
+    }
+  }
+  return nullptr;
+}
+
 namespace {
   std::recursive_mutex s_api_critsect;
 
   SNETSPIPTR s_spi;
   std::vector<PROVIDERINFO> s_spi_providerlist;
   PROVIDERINFO* s_spi_providerptr;
+  int s_api_playeroffset;
 
   CODEVERIFYPROC s_verify_fn;
 
@@ -134,6 +154,7 @@ namespace {
   uint32_t s_game_programid;
   uint32_t s_game_versionid;
 
+  STORM_LIST(CONNREC) s_conn_local;
   STORM_LIST(CONNREC) s_conn_connlist;
 
 
@@ -319,7 +340,33 @@ BOOL STORMAPI SNetGetPlayerCaps(std::uint32_t playerid, SNETCAPSPTR caps) {
 
 // @113
 BOOL STORMAPI SNetGetPlayerName(std::uint32_t playerid, char* buffer, std::uint32_t buffersize) {
-  return FALSE;
+  STORM_VALIDATE_BEGIN;
+  STORM_VALIDATE(buffer);
+  STORM_VALIDATE(buffersize != 0);
+  STORM_VALIDATE_END;
+
+  SCOPE_LOCK(s_api_critsect);
+
+  buffer[0] = '\0';
+
+  if (!s_spi) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  if (s_game_playerid == -1) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  CONNREC *conn = ConnFindByPlayerId(playerid - s_api_playeroffset);
+  if (!conn || (conn->flags & 4)) {
+    SErrSetLastError(STORM_ERROR_INVALID_PLAYER);
+    return FALSE;
+  }
+
+  SStrCopy(buffer, conn->name, buffersize);
+  return TRUE;
 }
 
 // @114
