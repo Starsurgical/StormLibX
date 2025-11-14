@@ -28,7 +28,14 @@ typedef struct _SCODEEXECUTEDATA {
 } SCODEEXECUTEDATA, * SCODEEXECUTEDATAPTR;
 
 
-extern "C" {
-}
+// @331
+BOOL STORMAPI SCodeCompile(LPCSTR prologstring, LPCSTR loopstring, LPCSTR *firsterror, DWORD maxiterations, DWORD flags, HSCODESTREAM *handle);
+
+// @332
+BOOL STORMAPI SCodeDelete(HSCODESTREAM handle);
+
+// @334
+BOOL STORMAPI SCodeExecute(HSCODESTREAM handle, SCODEEXECUTEDATAPTR executedata);
+
 
 #endif
