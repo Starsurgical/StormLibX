@@ -98,6 +98,24 @@ struct PROVIDERINFO {
   SNETCAPS caps;
 };
 
+struct _PLAYERNAME {
+  char name[128];
+};
+
+static std::vector<_PLAYERNAME> s_game_playernames;
+
+static void GameSetPlayerName(unsigned int id, const char *name) {
+  STORM_VALIDATE_BEGIN;
+  STORM_VALIDATE(id < 256);
+  STORM_VALIDATE_END;
+
+  if (id + 1 > s_game_playernames.size()) {
+    s_game_playernames.resize(id + 1, {});
+  }
+
+  SStrCopy(s_game_playernames[id].name, name, sizeof(_PLAYERNAME::name));
+}
+
 namespace {
   std::recursive_mutex s_api_critsect;
 
@@ -513,7 +531,12 @@ int STORMAPI SNetGetLeagueId(std::uint32_t* leagueID) {
 
 // @144
 BOOL STORMAPI SNetGetPlayerNames(char** names) {
-  return FALSE;
+  for (int i = 0; i < 8; i++) {
+    if (s_game_playernames.size() > i) {
+      names[i] = s_game_playernames[i].name;
+    }
+  }
+  return TRUE;
 }
 
 // @145
