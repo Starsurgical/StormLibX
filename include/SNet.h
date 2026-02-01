@@ -216,20 +216,20 @@ typedef struct _SNETSPI_DEVICELIST {
 } SNETSPI_DEVICELIST, * SNETSPI_DEVICELISTPTR;
 
 typedef struct _SNETSPI_GAMELIST {
-  std::uint32_t              gameid;
-  std::uint32_t              gamemode;
-  std::uint32_t              creationtime;
+  std::uint32_t      gameid;
+  std::uint32_t      gamemode;
+  std::uint32_t      creationtime;
   SNETADDR           owner;
-  std::uint32_t              ownerlatency;
-  std::uint32_t              ownerlasttime;
-  std::uint32_t              gamecategorybits;
+  std::uint32_t      ownerlatency;
+  std::uint32_t      ownerlasttime;
+  std::uint32_t      gamecategorybits;
   char               gamename[SNETSPI_MAXSTRINGLENGTH];
   char               gamedescription[SNETSPI_MAXSTRINGLENGTH];
   _SNETSPI_GAMELIST* next;
-  void*             clientdata;
-  std::uint32_t              clientdatabytes;
-  std::uint32_t              productid;
-  std::uint32_t              version;
+  void*              clientdata;
+  std::uint32_t      clientdatabytes;
+  std::uint32_t      productid;
+  std::uint32_t      version;
 } SNETSPI_GAMELIST, * SNETSPI_GAMELISTPTR;
 
 typedef struct _SNETSPI {

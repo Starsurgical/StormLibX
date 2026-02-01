@@ -553,7 +553,31 @@ BOOL STORMAPI SNetGetProviderCaps(SNETCAPSPTR caps) {
 
 // @115
 BOOL STORMAPI SNetGetTurnsInTransit(std::uint32_t* turns) {
-  return FALSE;
+  VALIDATEBEGIN;
+  VALIDATE(turns);
+  VALIDATEEND;
+
+  SCOPE_LOCK(s_api_critsect);
+
+  *turns = 0;
+  if (!s_spi) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  if (s_game_playerid == -1) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  CONNREC* rec = ConnFindLocal();
+  if (!rec) {
+    SErrSetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    return FALSE;
+  }
+
+  *turns = rec->outgoingsequence[2] - rec->incomingsequence[2];
+  return TRUE;
 }
 
 // @116
