@@ -22,8 +22,8 @@
 caps.dat
 
   struct {
-    std::uint32_t entrysize;
-    std::uint32_t providerid;
+    uint32_t entrysize;
+    uint32_t providerid;
     char description[]; // null terminated string of any length
     SNETCAPS caps;
   }[]; // repeats for the number of providers
@@ -124,19 +124,29 @@ static int s_api_playeroffset;
 
 static CODEVERIFYPROC s_CodeSignFunc;
 
-static char s_game_playerid = -1;
+static char s_game_playerid = SNET_INVALIDPLAYERID;
 static std::thread s_recv_thread;
 static std::atomic_bool s_recv_shutdown;
 static HANDLE s_recv_event;  // FIXME: move off Windows
-
-static uint32_t s_game_optcategorybits;
-static uint32_t s_game_programid;
-static uint32_t s_game_versionid;
 
 static STORM_LIST(CONNREC) s_conn_local;
 static STORM_LIST(CONNREC) s_conn_connlist;
 
 static std::vector<_PLAYERNAME> s_game_playernames;
+static uint32_t s_game_categorybits;
+static uint32_t s_game_creationtime;
+static uint32_t s_game_initdata;
+static uint32_t s_game_initdatabytes;
+static uint32_t s_game_gamemode;
+static char s_game_gamedesc[128];
+static char s_game_gamename[128];
+static char s_game_gamepass[128];
+static uint32_t s_game_joining;
+static uint32_t s_game_ladderid;
+static uint32_t s_game_optcategorybits;
+static uint32_t s_game_playersallowed;
+static uint32_t s_game_programid;
+static uint32_t s_game_versionid;
 
 
 static uint32_t PortGetTickCount() {
@@ -156,18 +166,18 @@ static void GameSetPlayerName(unsigned int id, const char *name) {
 }
 
 static void ConnAssignPlayerId(CONNREC* conn, BYTE playerid) {
-  conn->oldplayerid = -1;
+  conn->oldplayerid = SNET_INVALIDPLAYERID;
   conn->playerid = playerid;
   
   for (CONNREC* curr = s_conn_local.Head(); curr; curr = curr->Next()) {
     if (curr->oldplayerid == playerid) {
-      curr->oldplayerid = -1;
+      curr->oldplayerid = SNET_INVALIDPLAYERID;
     }
   }
   
   for (CONNREC* curr = s_conn_connlist.Head(); curr; curr = curr->Next()) {
     if (curr->oldplayerid == playerid) {
-      curr->oldplayerid = -1;
+      curr->oldplayerid = SNET_INVALIDPLAYERID;
     }
   }
 }
@@ -193,13 +203,13 @@ static CONNREC* ConnFindByOldPlayerId(unsigned int playerid) {
   if (playerid == 255) return nullptr;
 
   for (CONNREC* curr = s_conn_local.Head(); curr; curr = curr->Next()) {
-    if (curr->oldplayerid == playerid && curr->playerid == -1) {
+    if (curr->oldplayerid == playerid && curr->playerid == SNET_INVALIDPLAYERID) {
       return curr;
     }
   }
 
   for (CONNREC* curr = s_conn_connlist.Head(); curr; curr = curr->Next()) {
-    if (curr->oldplayerid == playerid && curr->playerid == -1) {
+    if (curr->oldplayerid == playerid && curr->playerid == SNET_INVALIDPLAYERID) {
       return curr;
     }
   }
@@ -209,8 +219,8 @@ static CONNREC* ConnFindByOldPlayerId(unsigned int playerid) {
 static CONNREC* ConnAddRec(STORM_LIST(CONNREC)* list, SNETADDRPTR addr) {
   CONNREC *newconn = list->NewNode(STORM_LIST_TAIL, 0, 0);
   newconn->addr = *addr;
-  newconn->playerid = -1;
-  newconn->oldplayerid = -1;
+  newconn->playerid = SNET_INVALIDPLAYERID;
+  newconn->oldplayerid = SNET_INVALIDPLAYERID;
   newconn->lastreceivetime = PortGetTickCount();
   return newconn;
 }
@@ -294,9 +304,54 @@ static int STORMAPI SMessageBox(HWND hWnd, const char* lpText, const char* lpCap
   return SDrawMessageBox(lpText, lpCaption, uType);
 }
 
+static void STORMAPI SysOnCircuitCheck(SYSEVENTPTR event) {
+  if (event->databytes == 4 && *static_cast<uint32_t*>(event->data) == 1) {
+    //ConnSendMessage(ConnFindByAddr(event->senderaddr), 0, 3, event->data, 4);
+  }
+}
+
+static void STORMAPI SysOnNewGameMode(SYSEVENTPTR event) {
+  s_game_gamemode = *static_cast<uint32_t*>(event->data);
+  s_game_gamepass[0] = (s_game_gamemode & 1) ? s_game_gamepass[0] : '\0';
+}
+
+static void STORMAPI SysOnPing(SYSEVENTPTR event) {
+  //ConnSendMessage(ConnFindByAddr(event->senderaddr), 0, 5, event->data, event->databytes);
+}
+
+static void STORMAPI SysOnPingResponse(SYSEVENTPTR event) {
+  CONNREC* rec = ConnFindByAddr(event->senderaddr);
+  uint32_t ticks = PortGetTickCount();
+  if (rec) {
+    rec->latency = ticks - rec->lastpingtime;
+    rec->peaklatency = std::max(rec->latency, rec->peaklatency);
+  }
+}
+
+struct MSG_PLYR_LEAVE {
+  uint16_t field_0;
+  uint32_t seq;
+};
+
+static void STORMAPI SysOnPlayerLeave(SYSEVENTPTR event) {
+  MSG_PLYR_LEAVE* msg = static_cast<MSG_PLYR_LEAVE*>(event->data);
+  CONNREC* rec = ConnFindByAddr(event->senderaddr);
+  if (rec && rec->playerid != SNET_INVALIDPLAYERID) {
+    rec->flags |= 8;
+    rec->unk = msg->field_0;
+    rec->finalsequence = msg->seq;
+  }
+}
+
+static void STORMAPI SysOnNewLadderId(SYSEVENTPTR event) {
+  s_game_ladderid = *static_cast<uint32_t*>(event->data);
+}
+
 static void STORMAPI SysOnPlayerJoinReject(SYSEVENTPTR event) {
   // intentionally empty
 }
+
+
 
 static BOOL SpiNormalizeDataBlocks(
   SNETPROGRAMDATAPTR programdatain,
@@ -371,7 +426,7 @@ static BOOL RecvInitialize(HANDLE* eventptr) {
 }
 
 // @101
-BOOL STORMAPI SNetCreateGame(const char* gamename, const char* gamepassword, const char* gamedescription, std::uint32_t gamecategorybits, void* initdata, std::uint32_t initdatabytes, std::uint32_t maxplayers, const char* playername, const char* playerdescription, std::uint32_t* playerid) {
+BOOL STORMAPI SNetCreateGame(const char* gamename, const char* gamepassword, const char* gamedescription, uint32_t gamecategorybits, void* initdata, uint32_t initdatabytes, uint32_t maxplayers, const char* playername, const char* playerdescription, uint32_t* playerid) {
   return SNetCreateLadderGame(gamename, gamepassword, gamedescription, gamecategorybits, 0, 0, initdata, initdatabytes, maxplayers, playername, playerdescription, playerid);
 }
 
@@ -380,7 +435,7 @@ BOOL STORMAPI SNetDestroy() {
   {
     SCOPE_LOCK(s_api_critsect);
 
-    if (s_game_playerid != -1) {
+    if (s_game_playerid != SNET_INVALIDPLAYERID) {
       SNetLeaveGame(SNET_EXIT_AUTO_SHUTDOWN);
     }
   }
@@ -454,22 +509,22 @@ BOOL STORMAPI SNetEnumProviders(SNETCAPSPTR mincaps, SNETENUMPROVIDERSPROC callb
 }
 
 // @106
-BOOL STORMAPI SNetDropPlayer(std::uint32_t playerid, std::uint32_t exitcode) {
+BOOL STORMAPI SNetDropPlayer(uint32_t playerid, uint32_t exitcode) {
   return FALSE;
 }
 
 // @107
-BOOL STORMAPI SNetGetGameInfo(std::uint32_t index, void* buffer, std::uint32_t buffersize, std::uint32_t* byteswritten) {
+BOOL STORMAPI SNetGetGameInfo(uint32_t index, void* buffer, uint32_t buffersize, uint32_t* byteswritten) {
   return FALSE;
 }
 
 // @109
-BOOL STORMAPI SNetGetNumPlayers(std::uint32_t* firstplayerid, std::uint32_t* lastplayerid, std::uint32_t* activeplayers) {
+BOOL STORMAPI SNetGetNumPlayers(uint32_t* firstplayerid, uint32_t* lastplayerid, uint32_t* activeplayers) {
   return FALSE;
 }
 
 // @112
-BOOL STORMAPI SNetGetPlayerCaps(std::uint32_t playerid, SNETCAPSPTR caps) {
+BOOL STORMAPI SNetGetPlayerCaps(uint32_t playerid, SNETCAPSPTR caps) {
   VALIDATEBEGIN;
   VALIDATE(caps && caps->size == sizeof(SNETCAPS));
   VALIDATEEND;
@@ -483,7 +538,7 @@ BOOL STORMAPI SNetGetPlayerCaps(std::uint32_t playerid, SNETCAPSPTR caps) {
     return FALSE;
   }
 
-  if (s_game_playerid == -1) {
+  if (s_game_playerid == SNET_INVALIDPLAYERID) {
     SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
     return FALSE;
   }
@@ -502,7 +557,7 @@ BOOL STORMAPI SNetGetPlayerCaps(std::uint32_t playerid, SNETCAPSPTR caps) {
 }
 
 // @113
-BOOL STORMAPI SNetGetPlayerName(std::uint32_t playerid, char* buffer, std::uint32_t buffersize) {
+BOOL STORMAPI SNetGetPlayerName(uint32_t playerid, char* buffer, uint32_t buffersize) {
   STORM_VALIDATE_BEGIN;
   STORM_VALIDATE(buffer);
   STORM_VALIDATE(buffersize != 0);
@@ -517,7 +572,7 @@ BOOL STORMAPI SNetGetPlayerName(std::uint32_t playerid, char* buffer, std::uint3
     return FALSE;
   }
 
-  if (s_game_playerid == -1) {
+  if (s_game_playerid == SNET_INVALIDPLAYERID) {
     SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
     return FALSE;
   }
@@ -552,7 +607,7 @@ BOOL STORMAPI SNetGetProviderCaps(SNETCAPSPTR caps) {
 }
 
 // @115
-BOOL STORMAPI SNetGetTurnsInTransit(std::uint32_t* turns) {
+BOOL STORMAPI SNetGetTurnsInTransit(uint32_t* turns) {
   VALIDATEBEGIN;
   VALIDATE(turns);
   VALIDATEEND;
@@ -565,7 +620,7 @@ BOOL STORMAPI SNetGetTurnsInTransit(std::uint32_t* turns) {
     return FALSE;
   }
 
-  if (s_game_playerid == -1) {
+  if (s_game_playerid == SNET_INVALIDPLAYERID) {
     SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
     return FALSE;
   }
@@ -581,42 +636,84 @@ BOOL STORMAPI SNetGetTurnsInTransit(std::uint32_t* turns) {
 }
 
 // @116
-BOOL STORMAPI SNetInitializeDevice(std::uint32_t deviceid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata) {
+BOOL STORMAPI SNetInitializeDevice(uint32_t deviceid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata) {
   return FALSE;
 }
 
 // @117
-BOOL STORMAPI SNetInitializeProvider(std::uint32_t providerid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata) {
-  return FALSE;
+BOOL STORMAPI SNetInitializeProvider(uint32_t providerid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata) {
+  SCOPE_LOCK(s_api_critsect);
+
+  SNETUIDATA nuidata;
+  SNETPROGRAMDATA nprogramdata;
+  SNETVERSIONDATA nversiondata;
+  SNETPLAYERDATA nplayerdata;
+
+  if (!SpiNormalizeDataBlocks(programdata, playerdata, interfacedata, versiondata, &nprogramdata, &nplayerdata, &nuidata, &nversiondata)) {
+    SErrSetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+  }
+
+  SEvtUnregisterType('SNET', 1);
+  SEvtUnregisterType('SNET', 2);
+
+  SEvtRegisterHandler('SNET', 2, 2, 0, (SEVTHANDLER)SysOnCircuitCheck);
+  //SEvtRegisterHandler('SNET', 2, 12, 0, (SEVTHANDLER)SysOnDropPlayer);
+  SEvtRegisterHandler('SNET', 2, 14, 0, (SEVTHANDLER)SysOnNewGameMode);
+  //SEvtRegisterHandler('SNET', 2, 13, 0, (SEVTHANDLER)SysOnNewGameOwner);
+  SEvtRegisterHandler('SNET', 2, 15, 0, (SEVTHANDLER)SysOnNewLadderId);
+  SEvtRegisterHandler('SNET', 2, 4, 0, (SEVTHANDLER)SysOnPing);
+  SEvtRegisterHandler('SNET', 2, 5, 0, (SEVTHANDLER)SysOnPingResponse);
+  //SEvtRegisterHandler('SNET', 2, 6, 0, (SEVTHANDLER)SysOnPlayerInfo);
+  //SEvtRegisterHandler('SNET', 2, 7, 0, (SEVTHANDLER)SysOnPlayerJoin);
+  //SEvtRegisterHandler('SNET', 2, 8, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptStart);
+  //SEvtRegisterHandler('SNET', 2, 9, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptDone);
+  SEvtRegisterHandler('SNET', 2, 10, 0, (SEVTHANDLER)SysOnPlayerJoinReject);
+  SEvtRegisterHandler('SNET', 2, 11, 0, (SEVTHANDLER)SysOnPlayerLeave);
+
+  HANDLE hEvent = NULL;
+  if (!RecvInitialize(&hEvent)) {
+    SErrSetLastError(ERROR_MAX_THRDS_REACHED);
+    return FALSE;
+  }
+
+  /*if (!SpiInitialize(providerid, &nprogramdata, &nplayerdata, &nuidata, &nversiondata, hEvent))*/ {
+    return FALSE;
+  }
+
+  s_game_optcategorybits = nprogramdata.optcategorybits;
+  s_game_programid = nprogramdata.programid;
+  s_game_versionid = nprogramdata.versionid;
+  return TRUE;
 }
 
 // @118
-BOOL STORMAPI SNetJoinGame(std::uint32_t gameid, const char* gamename, const char* gamepassword, const char* playername, const char* playerdescription, std::uint32_t* playerid) {
+BOOL STORMAPI SNetJoinGame(uint32_t gameid, const char* gamename, const char* gamepassword, const char* playername, const char* playerdescription, uint32_t* playerid) {
   return FALSE;
 }
 
 // @119
-BOOL STORMAPI SNetLeaveGame(std::uint32_t exitcode) {
+BOOL STORMAPI SNetLeaveGame(uint32_t exitcode) {
   return FALSE;
 }
 
 // @120
-BOOL STORMAPI SNetPerformUpgrade(std::uint32_t* upgradestatus) {
+BOOL STORMAPI SNetPerformUpgrade(uint32_t* upgradestatus) {
   return FALSE;
 }
 
 // @121
-BOOL STORMAPI SNetReceiveMessage(std::uint32_t* senderplayerid, void** data, std::uint32_t* databytes) {
+BOOL STORMAPI SNetReceiveMessage(uint32_t* senderplayerid, void** data, uint32_t* databytes) {
   return FALSE;
 }
 
 // @122
-BOOL STORMAPI SNetReceiveTurns(std::uint32_t firstplayerid, std::uint32_t arraysize, void** arraydata, std::uint32_t* arraydatabytes, std::uint32_t* arrayplayerstatus) {
+BOOL STORMAPI SNetReceiveTurns(uint32_t firstplayerid, uint32_t arraysize, void** arraydata, uint32_t* arraydatabytes, uint32_t* arrayplayerstatus) {
   return FALSE;
 }
 
 // @123
-BOOL STORMAPI SNetRegisterEventHandler(std::uint32_t eventid, SNETEVENTPROC callback) {
+BOOL STORMAPI SNetRegisterEventHandler(uint32_t eventid, SNETEVENTPROC callback) {
   VALIDATEBEGIN;
   VALIDATE(callback);
   VALIDATEEND;
@@ -646,17 +743,17 @@ BOOL STORMAPI SNetResetLatencyMeasurements() {
 }
 
 // @125
-BOOL STORMAPI SNetSelectGame(std::uint32_t flags, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata, std::uint32_t* playerid) {
+BOOL STORMAPI SNetSelectGame(uint32_t flags, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata, uint32_t* playerid) {
   return FALSE;
 }
 
 // @127
-BOOL STORMAPI SNetSendMessage(std::uint32_t targetplayerid, void* data, std::uint32_t databytes) {
+BOOL STORMAPI SNetSendMessage(uint32_t targetplayerid, void* data, uint32_t databytes) {
   return FALSE;
 }
 
 // @128
-BOOL STORMAPI SNetSendTurn(void* data, std::uint32_t databytes) {
+BOOL STORMAPI SNetSendTurn(void* data, uint32_t databytes) {
   return FALSE;
 }
 
@@ -668,12 +765,12 @@ BOOL STORMAPI SNetSetBasePlayer(int playerid) {
 }
 
 // @130
-BOOL STORMAPI SNetSetGameMode(std::uint32_t modeflags) {
+BOOL STORMAPI SNetSetGameMode(uint32_t modeflags) {
   return FALSE;
 }
 
 // @133
-BOOL STORMAPI SNetEnumGamesEx(std::uint32_t categorybits, std::uint32_t categorymask, SNETENUMGAMESEXPROC callback, std::uint32_t* hintnextcall) {
+BOOL STORMAPI SNetEnumGamesEx(uint32_t categorybits, uint32_t categorymask, SNETENUMGAMESEXPROC callback, uint32_t* hintnextcall) {
   return FALSE;
 }
 
@@ -683,7 +780,7 @@ BOOL STORMAPI SNetSendServerChatCommand(const char* command) {
 }
 
 // @137
-BOOL STORMAPI SNetDisconnectAll(std::uint32_t flags) {
+BOOL STORMAPI SNetDisconnectAll(uint32_t flags) {
   SCOPE_LOCK(s_api_critsect);
 
   if (!s_spi) {
@@ -691,7 +788,7 @@ BOOL STORMAPI SNetDisconnectAll(std::uint32_t flags) {
     return FALSE;
   }
 
-  if (s_game_playerid == -1) {
+  if (s_game_playerid == SNET_INVALIDPLAYERID) {
     SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
     return FALSE;
   }
@@ -705,7 +802,7 @@ BOOL STORMAPI SNetDisconnectAll(std::uint32_t flags) {
 }
 
 // @138
-BOOL STORMAPI SNetCreateLadderGame(const char* gamename, const char* gamepassword, const char* gamedescription, std::uint32_t gamecategorybits, std::uint32_t ladderid, std::uint32_t gamemode, void* initdata, std::uint32_t initdatabytes, std::uint32_t maxplayers, const char* playername, const char* playerdescription, std::uint32_t* playerid) {
+BOOL STORMAPI SNetCreateLadderGame(const char* gamename, const char* gamepassword, const char* gamedescription, uint32_t gamecategorybits, uint32_t ladderid, uint32_t gamemode, void* initdata, uint32_t initdatabytes, uint32_t maxplayers, const char* playername, const char* playerdescription, uint32_t* playerid) {
   return FALSE;
 }
 
@@ -741,7 +838,7 @@ BOOL STORMAPI SNetSendLeagueCommand(const char* cmd, SNETLEAGUECMDRESULTPROC cal
 }
 
 // @142
-int STORMAPI SNetSendReplayPath(const char* replaypath, std::uint32_t gameid, const char* textgameresult) {
+int STORMAPI SNetSendReplayPath(const char* replaypath, uint32_t gameid, const char* textgameresult) {
   VALIDATEBEGIN;
   VALIDATE(replaypath);
   VALIDATEEND;
@@ -762,7 +859,7 @@ int STORMAPI SNetSendReplayPath(const char* replaypath, std::uint32_t gameid, co
 }
 
 // @143
-int STORMAPI SNetGetLeagueId(std::uint32_t* leagueID) {
+int STORMAPI SNetGetLeagueId(uint32_t* leagueID) {
   VALIDATEBEGIN;
   VALIDATE(leagueID);
   VALIDATEEND;
@@ -835,7 +932,7 @@ int STORMAPI SNetGetReplyName(char* pszReplyName, size_t nameSize) {
 
 // @147
 // Returns 4 byte protocol identifier of current protocol, only used for debugging, can be removed.
-std::uint32_t STORMAPI SNetGetCurrentProviderID() {
+uint32_t STORMAPI SNetGetCurrentProviderID() {
   return s_spi_providerptr ? s_spi_providerptr->id : 0;
 }
 
