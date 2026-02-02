@@ -1,9 +1,10 @@
 #include <storm/Memory.hpp>
 #include <storm/Event.hpp>
-#include "SErr.h"
-#include "SNet.h"
-#include "SMem.h"
 #include "SDraw.h"
+#include "SErr.h"
+#include "SFile.h"
+#include "SMem.h"
+#include "SNet.h"
 
 #include <SDL.h>
 #include <SDL_loadso.h>
@@ -407,6 +408,29 @@ static void SpiDestroy(BOOL clearproviderlist) {
     s_spi_providersfound = false;
   }
   s_spi_providerptr = nullptr;
+}
+
+static void* SpiLoadCapsSignature(const char* filename) {
+  void* result = nullptr;
+
+  HSARCHIVE archive = nullptr;
+  HSFILE file = nullptr;
+
+  if (SFileOpenArchive(filename, 0, 0, &archive)) {
+    uint32_t authtype;
+    SFileAuthenticateArchive(archive, &authtype);
+    if (authtype == SFILE_AUTH_UNABLETOAUTHENTICATE || authtype >= SFILE_AUTH_AUTHENTICBLIZZARD) {
+      if (SFileOpenFileEx(archive, "caps.dat", 0, &file)) {
+        uint32_t bytes = SFileGetFileSize(file);
+        result = ALLOC(bytes);
+        SFileReadFile(file, result, bytes);
+      }
+    }
+  }
+
+  if (file) SFileCloseFile(file);
+  if (archive) SFileCloseArchive(archive);
+  return result;
 }
 
 static BOOL SpiNormalizeDataBlocks(
