@@ -6,6 +6,7 @@
 #include "SDraw.h"
 
 #include <SDL.h>
+#include <SDL_loadso.h>
 
 #include <atomic>
 #include <chrono>
@@ -114,9 +115,20 @@ typedef struct _SYSEVENT {
   uint8_t     eventid;
 } SYSEVENT, *SYSEVENTPTR;
 
+struct SPI_SENDBUFFER {
+  SNETADDRPTR addrptr[16];
+  SNETADDR addr[16];
+  uint8_t data[7872];
+};
+
+static uint32_t s_spi_outgoingtime;
+static bool s_spi_providersfound;
+static SPI_SENDBUFFER s_spi_sendbuffer;
 
 static std::recursive_mutex s_api_critsect;
+static std::recursive_mutex s_sys_usereventlist_critsect;
 
+static void* s_spi_lib;
 static SNETSPIPTR s_spi;
 static std::vector<PROVIDERINFO> s_spi_providerlist;
 static PROVIDERINFO* s_spi_providerptr;
@@ -351,7 +363,7 @@ static void STORMAPI SysOnPlayerJoinReject(SYSEVENTPTR event) {
   // intentionally empty
 }
 
-int SpiCheckProviderOrder(PROVIDERINFO* first, PROVIDERINFO* second) {
+static int SpiCheckProviderOrder(PROVIDERINFO* first, PROVIDERINFO* second) {
   static const DWORD baseorder[] = {'BNET', 'IPXN', 'IPXW', 'MODM', 'SCBL', 'MSDP'};
   int firstindex, secondindex;
   firstindex = secondindex = std::numeric_limits<int>::max();
@@ -365,6 +377,36 @@ int SpiCheckProviderOrder(PROVIDERINFO* first, PROVIDERINFO* second) {
     return secondindex - firstindex;
   }
   return SStrCmpI(first->desc, second->desc);
+}
+
+static void SpiDestroy(BOOL clearproviderlist) {
+  if (s_spi_lib && s_spi) {
+    s_spi->spiDestroy();
+  }
+
+  if (s_spi_lib) {
+    SDL_UnloadObject(s_spi_lib);
+    s_spi_lib = nullptr;
+  }
+
+  if (s_spi) {
+    delete s_spi;
+    s_spi = nullptr;
+  }
+
+/*
+  if (s_spi_sendbuffer) {
+    // TODO: VirtualUnlock, VirtualFree
+    s_spi_sendbuffer = nullptr;
+  }
+*/
+  s_spi_sendbuffer = {};
+
+  if (clearproviderlist) {
+    s_spi_providerlist.clear();
+    s_spi_providersfound = false;
+  }
+  s_spi_providerptr = nullptr;
 }
 
 static BOOL SpiNormalizeDataBlocks(
