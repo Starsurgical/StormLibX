@@ -366,6 +366,9 @@ extern "C" {
   // @130
   BOOL STORMAPI SNetSetGameMode(uint32_t modeflags);
 
+  // @131
+  BOOL STORMAPI SNetUnregisterEventHandler(uint32_t eventid, SNETEVENTPROC callback);
+
   // @133
   BOOL STORMAPI SNetEnumGamesEx(uint32_t categorybits, uint32_t categorymask, SNETENUMGAMESEXPROC callback, uint32_t* hintnextcall);
 
@@ -379,7 +382,7 @@ extern "C" {
   BOOL STORMAPI SNetCreateLadderGame(const char* gamename, const char* gamepassword, const char* gamedescription, uint32_t gamecategorybits, uint32_t ladderid, uint32_t gamemode, void* initdata, uint32_t initdatabytes, uint32_t maxplayers, const char* playername, const char* playerdescription, uint32_t* playerid);
 
   // @139
-  BOOL STORMAPI SNetReportGameResult(unsigned firstplayerid, int arraysize, int* resultarray, const char* textgameresult, const char* textplayerresult);
+  BOOL STORMAPI SNetReportGameResult(uint32_t firstplayerid, uint32_t arraysize, uint32_t* resultarray, const char* textgameresult, const char* textplayerresult);
 
   // @141
   BOOL STORMAPI SNetSendLeagueCommand(LPCTSTR cmd, SNETLEAGUECMDRESULTPROC callback);

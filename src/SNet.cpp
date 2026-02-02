@@ -958,7 +958,32 @@ BOOL STORMAPI SNetCreateLadderGame(const char* gamename, const char* gamepasswor
 }
 
 // @139
-BOOL STORMAPI SNetReportGameResult(unsigned firstplayerid, int arraysize, int* resultarray, const char* textgameresult, const char* textplayerresult) {
+BOOL STORMAPI SNetReportGameResult(uint32_t firstplayerid, uint32_t arraysize, uint32_t* resultarray, const char* textgameresult, const char* textplayerresult) {
+  VALIDATEBEGIN;
+  VALIDATE(arraysize);
+  VALIDATE(resultarray);
+  VALIDATEEND;
+
+  SCOPE_LOCK(s_api_critsect);
+
+  if (!s_spi) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  const char** playernames = static_cast<const char**>(ALLOCZERO(sizeof(char*) * arraysize));
+  int i = 0;
+  for (unsigned id = firstplayerid; id < firstplayerid + arraysize; id++) {
+    if (id < s_game_playernames.size()) {
+      playernames[i] = s_game_playernames[id].name;
+    }
+    i++;
+  }
+
+  if (s_spi->spiReportGameResult) {
+    s_spi->spiReportGameResult(s_game_ladderid, arraysize, playernames, resultarray, textgameresult, textplayerresult);
+  }
+  FREE(playernames);
   return TRUE;
 }
 
