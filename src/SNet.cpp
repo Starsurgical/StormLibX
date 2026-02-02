@@ -747,7 +747,27 @@ BOOL STORMAPI SNetGetTurnsInTransit(uint32_t* turns) {
 
 // @116
 BOOL STORMAPI SNetInitializeDevice(uint32_t deviceid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata) {
-  return FALSE;
+  SCOPE_LOCK(s_api_critsect);
+
+  SNETUIDATA nuidata;
+  SNETPROGRAMDATA nprogramdata;
+  SNETVERSIONDATA nversiondata;
+  SNETPLAYERDATA nplayerdata;
+
+  if (!s_spi) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  if (!SpiNormalizeDataBlocks(programdata, playerdata, interfacedata, versiondata, &nprogramdata, &nplayerdata, &nuidata, &nversiondata)) {
+    SErrSetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+  }
+
+  if (!s_spi->spiInitializeDevice(deviceid, &nprogramdata, &nplayerdata, &nuidata, &nversiondata)) {
+    return FALSE;
+  }
+  return TRUE;
 }
 
 // @117

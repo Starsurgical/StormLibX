@@ -248,7 +248,7 @@ typedef struct _SNETSPI {
   BOOL(STORMAPI* spiGetPerformanceData)(uint32_t counterid, uint32_t* countervalue, LARGE_INTEGER* measurementtime, LARGE_INTEGER* measurementfreq);
   // Called when the module is initialized
   BOOL(STORMAPI* spiInitialize)(SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata, HANDLE hEvent);
-  BOOL(STORMAPI* spiInitializeDevice)(uint32_t deviceid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR itnerfacedata, SNETVERSIONDATAPTR versiondata);
+  BOOL(STORMAPI* spiInitializeDevice)(uint32_t deviceid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata);
   BOOL(STORMAPI* spiLockDeviceList)(SNETSPI_DEVICELISTPTR* devicelist);
   // Called to prevent the game list from updating so that it can be processed by storm
   BOOL(STORMAPI* spiLockGameList)(uint32_t categorybits, uint32_t categorymask, SNETSPI_GAMELISTPTR* gamelist);
