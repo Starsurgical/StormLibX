@@ -373,6 +373,27 @@ static void SysDestroy() {
   }
 }
 
+static void SysDispatchUserEvents() {
+  while(1) {
+    USEREVENT* curr;
+    {
+      SCOPE_LOCK(s_sys_usereventlist_critsect);
+      curr = s_sys_usereventlist.Head();
+      if (curr) {
+        s_sys_usereventlist.UnlinkNode(curr);
+      }
+    }
+
+    if (!curr) break;
+
+    curr->event.playerid += s_api_playeroffset;
+    SEvtDispatch('SNET', 1, curr->event.eventid, &curr->event);
+
+    FREEIFUSED(curr->event.data);
+    delete curr;
+  }
+}
+
 static int SpiCheckProviderOrder(PROVIDERINFO* first, PROVIDERINFO* second) {
   static const DWORD baseorder[] = {'BNET', 'IPXN', 'IPXW', 'MODM', 'SCBL', 'MSDP'};
   int firstindex, secondindex;
