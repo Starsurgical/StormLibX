@@ -394,6 +394,22 @@ static void SysDispatchUserEvents() {
   }
 }
 
+static void SysQueueUserEvent(uint32_t eventid, uint32_t playerid, void* data, uint32_t databytes) {
+  USEREVENT* userevent = s_sys_usereventlist.NewNode(0, 0, 0);
+  userevent->event.eventid = eventid;
+  userevent->event.playerid = playerid;
+
+  if (data && databytes) {
+    userevent->event.data = ALLOC(databytes);
+    SMemCopy(userevent->event.data, data, databytes);
+    userevent->event.databytes = databytes;
+  }
+
+  SCOPE_LOCK(s_sys_usereventlist_critsect);
+
+  s_sys_usereventlist.LinkNode(userevent, STORM_LIST_LINK_BEFORE, nullptr);
+}
+
 static int SpiCheckProviderOrder(PROVIDERINFO* first, PROVIDERINFO* second) {
   static const DWORD baseorder[] = {'BNET', 'IPXN', 'IPXW', 'MODM', 'SCBL', 'MSDP'};
   int firstindex, secondindex;
