@@ -91,10 +91,10 @@ struct PROVIDERINFO {
   char     filename[MAX_PATH];
   uint32_t index;
   uint32_t id;
-  char     desc[SNETSPI_MAXSTRINGLENGTH];
-  char     req[SNETSPI_MAXSTRINGLENGTH];
   uint32_t field_20C;
   uint32_t field_210;
+  char     desc[SNETSPI_MAXSTRINGLENGTH];
+  char     req[SNETSPI_MAXSTRINGLENGTH];
   SNETCAPS caps;
 };
 
@@ -351,7 +351,21 @@ static void STORMAPI SysOnPlayerJoinReject(SYSEVENTPTR event) {
   // intentionally empty
 }
 
+int SpiCheckProviderOrder(PROVIDERINFO* first, PROVIDERINFO* second) {
+  static const DWORD baseorder[] = {'BNET', 'IPXN', 'IPXW', 'MODM', 'SCBL', 'MSDP'};
+  int firstindex, secondindex;
+  firstindex = secondindex = std::numeric_limits<int>::max();
 
+  for (int i = 0; i < std::size(baseorder); i++) {
+    if (first->id == baseorder[i]) firstindex = i;
+    if (second->id == baseorder[i]) secondindex = i;
+  }
+
+  if (firstindex != std::numeric_limits<int>::max() || secondindex != std::numeric_limits<int>::max()) {
+    return secondindex - firstindex;
+  }
+  return SStrCmpI(first->desc, second->desc);
+}
 
 static BOOL SpiNormalizeDataBlocks(
   SNETPROGRAMDATAPTR programdatain,
