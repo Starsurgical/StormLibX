@@ -1007,6 +1007,30 @@ BOOL STORMAPI SNetReportGameResult(uint32_t firstplayerid, uint32_t arraysize, u
   return TRUE;
 }
 
+// @140
+BOOL STORMAPI SNetCheckDataFile(const char* filename, const void* data, uint32_t bytes, uint32_t* extendedresult) {
+  if (extendedresult) *extendedresult = 0;
+
+  VALIDATEBEGIN;
+  VALIDATE(filename);
+  VALIDATE(*filename);
+  VALIDATE(data);
+  VALIDATE(extendedresult);
+  VALIDATEEND;
+
+  SCOPE_LOCK(s_api_critsect);
+
+  if (!s_spi) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  if (s_spi->spiCheckDataFile) {
+    s_spi->spiCheckDataFile(filename, data, bytes, extendedresult);
+  }
+  return *extendedresult != 0;
+}
+
 // @141
 BOOL STORMAPI SNetSendLeagueCommand(const char* cmd, SNETLEAGUECMDRESULTPROC callback) {
   VALIDATEBEGIN;

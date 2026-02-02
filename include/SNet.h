@@ -384,6 +384,9 @@ extern "C" {
   // @139
   BOOL STORMAPI SNetReportGameResult(uint32_t firstplayerid, uint32_t arraysize, uint32_t* resultarray, const char* textgameresult, const char* textplayerresult);
 
+  // @140
+  BOOL STORMAPI SNetCheckDataFile(const char* filename, uint8_t* data, uint32_t bytes, uint32_t* extendedresult);
+
   // @141
   BOOL STORMAPI SNetSendLeagueCommand(LPCTSTR cmd, SNETLEAGUECMDRESULTPROC callback);
 
