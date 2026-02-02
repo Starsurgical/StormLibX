@@ -106,7 +106,7 @@ struct _PLAYERNAME {
 
 struct USEREVENT : TSLinkedNode<USEREVENT> {
   SNETEVENT event;
-} *USEREVENTPTR;
+};
 
 typedef struct _SYSEVENT {
   SNETADDRPTR senderaddr;
@@ -144,6 +144,7 @@ static HANDLE s_recv_event;  // FIXME: move off Windows
 
 static STORM_LIST(CONNREC) s_conn_local;
 static STORM_LIST(CONNREC) s_conn_connlist;
+static STORM_LIST(USEREVENT) s_sys_usereventlist;
 
 static std::vector<_PLAYERNAME> s_game_playernames;
 static uint32_t s_game_categorybits;
@@ -364,6 +365,14 @@ static void STORMAPI SysOnPlayerJoinReject(SYSEVENTPTR event) {
   // intentionally empty
 }
 
+static void SysDestroy() {
+  SCOPE_LOCK(s_sys_usereventlist_critsect);
+  while (USEREVENT* curr = s_sys_usereventlist.Head()) {
+    if (curr->event.data) FREE(curr->event.data);
+    s_sys_usereventlist.DeleteNode(curr);
+  }
+}
+
 static int SpiCheckProviderOrder(PROVIDERINFO* first, PROVIDERINFO* second) {
   static const DWORD baseorder[] = {'BNET', 'IPXN', 'IPXW', 'MODM', 'SCBL', 'MSDP'};
   int firstindex, secondindex;
@@ -529,12 +538,12 @@ BOOL STORMAPI SNetDestroy() {
 
   SCOPE_LOCK(s_api_critsect);
 
-  //SysDestroy();
+  SysDestroy();
   SEvtUnregisterType('SNET', 1);
   SEvtUnregisterType('SNET', 2);
   ConnDestroy();
   s_game_playernames.clear();
-  //SpiDestroy(1);
+  SpiDestroy(1);
   if ( s_recv_event )
   {
     CloseHandle(s_recv_event);
