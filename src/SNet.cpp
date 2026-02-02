@@ -854,7 +854,30 @@ BOOL STORMAPI SNetResetLatencyMeasurements() {
 
 // @125
 BOOL STORMAPI SNetSelectGame(uint32_t flags, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata, uint32_t* playerid) {
-  return FALSE;
+  SNETUIDATA nuidata;
+  SNETPROGRAMDATA nprogramdata;
+  SNETVERSIONDATA nversiondata;
+  SNETPLAYERDATA nplayerdata;
+
+  decltype(SNETSPI::spiSelectGame) fn_spiSelectGame;
+
+  {
+    SCOPE_LOCK(s_api_critsect);
+    if (playerid) *playerid = 0;
+
+    if (!s_spi) {
+      SErrSetLastError(ERROR_BAD_PROVIDER);
+      return FALSE;
+    }
+
+    if (!SpiNormalizeDataBlocks(programdata, playerdata, interfacedata, versiondata, &nprogramdata, &nplayerdata, &nuidata, &nversiondata)) {
+      SErrSetLastError(ERROR_INVALID_PARAMETER);
+      return FALSE;
+    }
+
+    fn_spiSelectGame = s_spi->spiSelectGame;
+  }
+  return fn_spiSelectGame(flags, &nprogramdata, &nplayerdata, &nuidata, &nversiondata, playerid);
 }
 
 // @127
