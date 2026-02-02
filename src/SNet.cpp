@@ -92,9 +92,9 @@ struct CONNREC : TSLinkedNode<CONNREC>
 struct PROVIDERINFO {
   char     filename[MAX_PATH];
   uint32_t index;
-  uint32_t id;
   uint32_t field_20C;
   uint32_t field_210;
+  uint32_t id;
   char     desc[SNETSPI_MAXSTRINGLENGTH];
   char     req[SNETSPI_MAXSTRINGLENGTH];
   SNETCAPS caps;
@@ -877,6 +877,24 @@ BOOL STORMAPI SNetSetBasePlayer(int playerid) {
 // @130
 BOOL STORMAPI SNetSetGameMode(uint32_t modeflags) {
   return FALSE;
+}
+
+// @131
+BOOL STORMAPI SNetUnregisterEventHandler(uint32_t eventid, SNETEVENTPROC callback) {
+  VALIDATEBEGIN;
+  VALIDATE(callback);
+  VALIDATEEND;
+
+  BOOL result;
+  {
+    SCOPE_LOCK(s_api_critsect);
+    result = SEvtUnregisterHandler('SNET', 1, eventid, (SEVTHANDLER)callback);
+  }
+
+  if (!result) {
+    SErrSetLastError(STORM_ERROR_NOT_REGISTERED);
+  }
+  return result;
 }
 
 // @133
