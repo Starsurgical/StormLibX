@@ -32,11 +32,14 @@ caps.dat
   }[]; // repeats for the number of providers
 */
 
-#define  TYPE_SYSTEM                  0
-#define  TYPE_MESSAGE                 1
-#define  TYPE_TURN                    2
-#define  TYPE_DATAGRAM                3
-#define  TYPES                        4
+#define TYPE_SYSTEM 0
+#define TYPE_MESSAGE 1
+#define TYPE_TURN 2
+#define TYPE_DATAGRAM 3
+#define TYPES 4
+
+#define PF_JOINING 0x00000004
+#define PF_LEAVING 0x00000008
 
 #define SNET_PERFID_TURN 1
 #define SNET_PERFID_TURNSSENT 4
@@ -72,17 +75,17 @@ struct HEADER
 typedef struct PACKET
 {
   HEADER header;
-  BYTE data[];
+  uint8_t data[];
 } *PACKETPTR;
 
 struct MESSAGE : TSLinkedNode<MESSAGE>
 {
   SNETADDRPTR addr;
   PACKETPTR data;
-  DWORD databytes;
+  uint32_t databytes;
   BOOL local;
-  DWORD sendtime;
-  DWORD resendtime;
+  uint32_t sendtime;
+  uint32_t resendtime;
 };
 
 struct CONNREC : TSLinkedNode<CONNREC>
@@ -90,27 +93,27 @@ struct CONNREC : TSLinkedNode<CONNREC>
   char name[128];
   char desc[128];
   SNETADDR addr;
-  DWORD flags;
-  DWORD lastreceivetime;
-  DWORD lastrequesttime;
-  DWORD lastpingtime;
-  DWORD latency;
-  DWORD peaklatency;
+  uint32_t flags;
+  uint32_t lastreceivetime;
+  uint32_t lastrequesttime;
+  uint32_t lastpingtime;
+  uint32_t latency;
+  uint32_t peaklatency;
   STORM_LIST(MESSAGE) outgoingqueue[TYPES];
   STORM_LIST(MESSAGE) incomingqueue[TYPES];
   STORM_LIST(MESSAGE) processing[TYPES];
   STORM_LIST(MESSAGE) oldturns;
-  WORD outgoingsequence[TYPES];
-  WORD incomingsequence[TYPES];
-  WORD lastprocessedturn;
-  WORD availablesequence[TYPES];
-  WORD acksequence[TYPES];
-  DWORD acktime[TYPES];
+  uint16_t outgoingsequence[TYPES];
+  uint16_t incomingsequence[TYPES];
+  uint16_t lastprocessedturn;
+  uint16_t availablesequence[TYPES];
+  uint16_t acksequence[TYPES];
+  uint32_t acktime[TYPES];
   BOOL gameowner;
   BOOL establishing;
-  DWORD exitcode;
-  uint32_t finalsequence;
-  uint16_t unk;
+  uint32_t field_208;
+  uint32_t exitcode;
+  uint16_t finalsequence;
   uint8_t playerid;
   uint8_t oldplayerid;
 };
@@ -141,6 +144,40 @@ typedef struct _SYSEVENT {
   uint8_t     senderplayerid;
   uint8_t     eventid;
 } SYSEVENT, *SYSEVENTPTR;
+
+typedef struct _SYSEVENTDATA_DROPPLAYER {
+  uint32_t playerid;
+  uint32_t finalsequence;
+  uint32_t exitcode;
+} SYSEVENTDATA_DROPPLAYER, *SYSEVENTDATA_DROPPLAYERPTR;
+
+typedef struct _SYSEVENTDATA_PLAYERJOIN {
+  char namedescpass[3*SNETSPI_MAXSTRINGLENGTH];
+} SYSEVENTDATA_PLAYERJOIN, *SYSEVENTDATA_PLAYERJOINPTR;
+
+typedef struct _SYSEVENTDATA_PLAYERJOIN_ACCEPTSTART {
+  uint32_t playerid;
+  uint32_t playersallowed;
+  uint32_t nextturn;
+  uint32_t gamemode;
+  uint32_t runningtime;
+  char     namedescpass[3*SNETSPI_MAXSTRINGLENGTH];
+} SYSEVENTDATA_PLAYERJOIN_ACCEPTSTART, *SYSEVENTDATA_PLAYERJOIN_ACCEPTSTARTPTR;
+
+typedef struct _SYSEVENTDATA_PLAYERINFO {
+  uint32_t bytes;
+  uint32_t playerid;
+  BOOL     gameowner;
+  uint32_t flags;
+  uint32_t startingturn;
+  SNETADDR addr;
+  char     namedesc[SNETSPI_MAXSTRINGLENGTH*2];
+} SYSEVENTDATA_PLAYERINFO, *SYSEVENTDATA_PLAYERINFOPTR;
+
+typedef struct _SYSEVENTDATA_PLAYERLEAVE {
+  uint32_t finalsequence;
+  uint32_t exitcode;
+} SYSEVENTDATA_PLAYERLEAVE, *SYSEVENTDATA_PLAYERLEAVEPTR;
 
 struct SPI_SENDBUFFER {
   SNETADDRPTR addrptr[16];
@@ -246,7 +283,7 @@ static void GameSetPlayerName(unsigned int id, const char *name) {
   SStrCopy(s_game_playernames[id].name, name, sizeof(_PLAYERNAME::name));
 }
 
-static void ConnAssignPlayerId(CONNREC* conn, BYTE playerid) {
+static void ConnAssignPlayerId(CONNREC* conn, uint8_t playerid) {
   conn->oldplayerid = SNET_INVALIDPLAYERID;
   conn->playerid = playerid;
   
@@ -410,6 +447,16 @@ static void STORMAPI SysOnCircuitCheck(SYSEVENTPTR event) {
   }
 }
 
+static void STORMAPI SysOnDropPlayer(SYSEVENTPTR event) {
+  SYSEVENTDATA_DROPPLAYERPTR msg = static_cast<SYSEVENTDATA_DROPPLAYERPTR>(event->data);
+  CONNREC* rec = ConnFindByPlayerId(msg->playerid);
+  if (rec && rec->playerid != SNET_INVALIDPLAYERID) {
+    rec->flags |= PF_LEAVING;
+    rec->finalsequence = msg->finalsequence;
+    rec->exitcode = msg->exitcode;
+  }
+}
+
 static void STORMAPI SysOnNewGameMode(SYSEVENTPTR event) {
   s_game_gamemode = *static_cast<uint32_t*>(event->data);
   s_game_gamepass[0] = (s_game_gamemode & 1) ? s_game_gamepass[0] : '\0';
@@ -434,12 +481,12 @@ struct MSG_PLYR_LEAVE {
 };
 
 static void STORMAPI SysOnPlayerLeave(SYSEVENTPTR event) {
-  MSG_PLYR_LEAVE* msg = static_cast<MSG_PLYR_LEAVE*>(event->data);
+  SYSEVENTDATA_PLAYERLEAVEPTR msg = static_cast<SYSEVENTDATA_PLAYERLEAVEPTR>(event->data);
   CONNREC* rec = ConnFindByAddr(event->senderaddr);
   if (rec && rec->playerid != SNET_INVALIDPLAYERID) {
-    rec->flags |= 8;
-    rec->unk = msg->field_0;
-    rec->finalsequence = msg->seq;
+    rec->flags |= PF_LEAVING;
+    rec->finalsequence = msg->finalsequence;
+    rec->exitcode = msg->exitcode;
   }
 }
 
@@ -497,7 +544,7 @@ static void SysQueueUserEvent(uint32_t eventid, uint32_t playerid, void* data, u
 }
 
 static int SpiCheckProviderOrder(PROVIDERINFO* first, PROVIDERINFO* second) {
-  static const DWORD baseorder[] = {'BNET', 'IPXN', 'IPXW', 'MODM', 'SCBL', 'MSDP'};
+  static const uint32_t baseorder[] = {'BNET', 'IPXN', 'IPXW', 'MODM', 'SCBL', 'MSDP'};
   int firstindex, secondindex;
   firstindex = secondindex = std::numeric_limits<int>::max();
 
@@ -842,7 +889,7 @@ BOOL STORMAPI SNetGetPlayerName(uint32_t playerid, char* buffer, uint32_t buffer
   }
 
   CONNREC *conn = ConnFindByPlayerId(playerid - s_api_playeroffset);
-  if (!conn || (conn->flags & 4)) {
+  if (!conn || (conn->flags & PF_JOINING)) {
     SErrSetLastError(STORM_ERROR_INVALID_PLAYER);
     return FALSE;
   }
@@ -942,7 +989,7 @@ BOOL STORMAPI SNetInitializeProvider(uint32_t providerid, SNETPROGRAMDATAPTR pro
   SEvtUnregisterType('SNET', 2);
 
   SEvtRegisterHandler('SNET', 2, 2, 0, (SEVTHANDLER)SysOnCircuitCheck);
-  //SEvtRegisterHandler('SNET', 2, 12, 0, (SEVTHANDLER)SysOnDropPlayer);
+  SEvtRegisterHandler('SNET', 2, 12, 0, (SEVTHANDLER)SysOnDropPlayer);
   SEvtRegisterHandler('SNET', 2, 14, 0, (SEVTHANDLER)SysOnNewGameMode);
   //SEvtRegisterHandler('SNET', 2, 13, 0, (SEVTHANDLER)SysOnNewGameOwner);
   SEvtRegisterHandler('SNET', 2, 15, 0, (SEVTHANDLER)SysOnNewLadderId);
@@ -1105,7 +1152,7 @@ BOOL STORMAPI SNetSendServerChatCommand(const char* command) {
 }
 
 // @137
-BOOL STORMAPI SNetDisconnectAll(uint32_t flags) {
+BOOL STORMAPI SNetDisconnectAll(uint32_t exitcode) {
   SCOPE_LOCK(s_api_critsect);
 
   if (!s_spi) {
@@ -1119,9 +1166,9 @@ BOOL STORMAPI SNetDisconnectAll(uint32_t flags) {
   }
 
   for (CONNREC *conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
-    conn->flags |= 8;
-    conn->unk = conn->incomingsequence[TYPE_TURN];
-    conn->finalsequence = flags;
+    conn->flags |= PF_LEAVING;
+    conn->finalsequence = conn->incomingsequence[TYPE_TURN];
+    conn->exitcode = exitcode;
   }
   return TRUE;
 }
