@@ -148,6 +148,12 @@ struct SPI_SENDBUFFER {
   uint8_t data[7872];
 };
 
+typedef struct _CLIENTDATA {
+  uint32_t bytes;
+  uint32_t numplayers;
+  uint32_t maxplayers;
+} CLIENTDATA, *CLIENTDATAPTR;
+
 static uint32_t s_spi_outgoingtime;
 static bool s_spi_providersfound;
 static std::unique_ptr<SPI_SENDBUFFER> s_spi_sendbuffer;
@@ -159,7 +165,7 @@ static void* s_spi_lib;
 static SNETSPIPTR s_spi;
 static std::vector<PROVIDERINFO> s_spi_providerlist;
 static PROVIDERINFO* s_spi_providerptr;
-static int s_api_playeroffset;
+static uint32_t s_api_playeroffset;
 
 static CODEVERIFYPROC s_CodeSignFunc;
 
@@ -219,6 +225,13 @@ static BOOL SpiSend(uint32_t addresses, SNETADDRPTR* addrlist, void* data, uint3
 
 static uint32_t PortGetTickCount() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+static void GameBuildClientData(CLIENTDATAPTR buffer, uint32_t* bytes) {
+  buffer->bytes = sizeof(CLIENTDATA);
+  SNetGetNumPlayers(nullptr, nullptr, &buffer->numplayers);
+  buffer->maxplayers = s_game_playersallowed;
+  *bytes = buffer->bytes;
 }
 
 static void GameSetPlayerName(unsigned int id, const char *name) {
@@ -744,7 +757,34 @@ BOOL STORMAPI SNetGetGameInfo(uint32_t index, void* buffer, uint32_t buffersize,
 
 // @109
 BOOL STORMAPI SNetGetNumPlayers(uint32_t* firstplayerid, uint32_t* lastplayerid, uint32_t* activeplayers) {
-  return FALSE;
+  SCOPE_LOCK(s_api_critsect);
+
+  if (firstplayerid) *firstplayerid = s_api_playeroffset - 1;
+  if (lastplayerid) *lastplayerid = s_api_playeroffset - 1;
+  if (activeplayers) *activeplayers = 0;
+
+  if (!s_spi) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  if (s_game_playerid == SNET_INVALIDPLAYERID) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  if (firstplayerid) *firstplayerid = s_api_playeroffset + s_game_playerid;
+  if (lastplayerid) *lastplayerid = s_api_playeroffset + s_game_playerid;
+  if (activeplayers) *activeplayers = 1;
+
+  for (CONNREC* conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
+    if (conn->playerid == SNET_INVALIDPLAYERID) continue;
+
+    if (firstplayerid) *firstplayerid = std::min(s_api_playeroffset + conn->playerid, *firstplayerid);
+    if (lastplayerid) *lastplayerid = std::max(s_api_playeroffset + conn->playerid, *lastplayerid);
+    if (activeplayers) (*activeplayers)++;
+  }
+  return TRUE;
 }
 
 // @112
