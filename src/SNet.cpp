@@ -32,6 +32,8 @@ caps.dat
   }[]; // repeats for the number of providers
 */
 
+#define NOPLAYER 0xFF
+
 #define TYPE_SYSTEM 0
 #define TYPE_MESSAGE 1
 #define TYPE_TURN 2
@@ -206,7 +208,7 @@ static uint32_t s_api_playeroffset;
 
 static CODEVERIFYPROC s_CodeSignFunc;
 
-static char s_game_playerid = SNET_INVALIDPLAYERID;
+static uint8_t s_game_playerid = NOPLAYER;
 static std::thread s_recv_thread;
 static std::atomic_bool s_recv_shutdown;
 static HANDLE s_recv_event;  // FIXME: move off Windows
@@ -284,18 +286,18 @@ static void GameSetPlayerName(unsigned int id, const char *name) {
 }
 
 static void ConnAssignPlayerId(CONNREC* conn, uint8_t playerid) {
-  conn->oldplayerid = SNET_INVALIDPLAYERID;
+  conn->oldplayerid = NOPLAYER;
   conn->playerid = playerid;
   
   for (CONNREC* curr = s_conn_local.Head(); curr; curr = curr->Next()) {
     if (curr->oldplayerid == playerid) {
-      curr->oldplayerid = SNET_INVALIDPLAYERID;
+      curr->oldplayerid = NOPLAYER;
     }
   }
   
   for (CONNREC* curr = s_conn_connlist.Head(); curr; curr = curr->Next()) {
     if (curr->oldplayerid == playerid) {
-      curr->oldplayerid = SNET_INVALIDPLAYERID;
+      curr->oldplayerid = NOPLAYER;
     }
   }
 }
@@ -321,13 +323,13 @@ static CONNREC* ConnFindByOldPlayerId(unsigned int playerid) {
   if (playerid == 255) return nullptr;
 
   for (CONNREC* curr = s_conn_local.Head(); curr; curr = curr->Next()) {
-    if (curr->oldplayerid == playerid && curr->playerid == SNET_INVALIDPLAYERID) {
+    if (curr->oldplayerid == playerid && curr->playerid == NOPLAYER) {
       return curr;
     }
   }
 
   for (CONNREC* curr = s_conn_connlist.Head(); curr; curr = curr->Next()) {
-    if (curr->oldplayerid == playerid && curr->playerid == SNET_INVALIDPLAYERID) {
+    if (curr->oldplayerid == playerid && curr->playerid == NOPLAYER) {
       return curr;
     }
   }
@@ -337,8 +339,8 @@ static CONNREC* ConnFindByOldPlayerId(unsigned int playerid) {
 static CONNREC* ConnAddRec(STORM_LIST(CONNREC)* list, SNETADDRPTR addr) {
   CONNREC *newconn = list->NewNode(STORM_LIST_TAIL, 0, 0);
   newconn->addr = *addr;
-  newconn->playerid = SNET_INVALIDPLAYERID;
-  newconn->oldplayerid = SNET_INVALIDPLAYERID;
+  newconn->playerid = NOPLAYER;
+  newconn->oldplayerid = NOPLAYER;
   newconn->lastreceivetime = PortGetTickCount();
   return newconn;
 }
@@ -450,7 +452,7 @@ static void STORMAPI SysOnCircuitCheck(SYSEVENTPTR event) {
 static void STORMAPI SysOnDropPlayer(SYSEVENTPTR event) {
   SYSEVENTDATA_DROPPLAYERPTR msg = static_cast<SYSEVENTDATA_DROPPLAYERPTR>(event->data);
   CONNREC* rec = ConnFindByPlayerId(msg->playerid);
-  if (rec && rec->playerid != SNET_INVALIDPLAYERID) {
+  if (rec && rec->playerid != NOPLAYER) {
     rec->flags |= PF_LEAVING;
     rec->finalsequence = msg->finalsequence;
     rec->exitcode = msg->exitcode;
@@ -460,6 +462,20 @@ static void STORMAPI SysOnDropPlayer(SYSEVENTPTR event) {
 static void STORMAPI SysOnNewGameMode(SYSEVENTPTR event) {
   s_game_gamemode = *static_cast<uint32_t*>(event->data);
   s_game_gamepass[0] = (s_game_gamemode & 1) ? s_game_gamepass[0] : '\0';
+}
+
+static void STORMAPI SysOnNewGameOwner(SYSEVENTPTR event) {
+  for (CONNREC* conn = s_conn_local.Head(); conn; conn = conn->Next()) {
+    conn->gameowner = FALSE;
+  }
+  for (CONNREC* conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
+    conn->gameowner = FALSE;
+  }
+
+  CONNREC* conn = ConnFindByPlayerId(*static_cast<uint32_t*>(event->data));
+  if (conn) {
+    conn->gameowner = TRUE;
+  }
 }
 
 static void STORMAPI SysOnPing(SYSEVENTPTR event) {
@@ -483,7 +499,7 @@ struct MSG_PLYR_LEAVE {
 static void STORMAPI SysOnPlayerLeave(SYSEVENTPTR event) {
   SYSEVENTDATA_PLAYERLEAVEPTR msg = static_cast<SYSEVENTDATA_PLAYERLEAVEPTR>(event->data);
   CONNREC* rec = ConnFindByAddr(event->senderaddr);
-  if (rec && rec->playerid != SNET_INVALIDPLAYERID) {
+  if (rec && rec->playerid != NOPLAYER) {
     rec->flags |= PF_LEAVING;
     rec->finalsequence = msg->finalsequence;
     rec->exitcode = msg->exitcode;
@@ -719,7 +735,7 @@ BOOL STORMAPI SNetDestroy() {
   {
     SCOPE_LOCK(s_api_critsect);
 
-    if (s_game_playerid != SNET_INVALIDPLAYERID) {
+    if (s_game_playerid != NOPLAYER) {
       SNetLeaveGame(SNET_EXIT_AUTO_SHUTDOWN);
     }
   }
@@ -815,7 +831,7 @@ BOOL STORMAPI SNetGetNumPlayers(uint32_t* firstplayerid, uint32_t* lastplayerid,
     return FALSE;
   }
 
-  if (s_game_playerid == SNET_INVALIDPLAYERID) {
+  if (s_game_playerid == NOPLAYER) {
     SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
     return FALSE;
   }
@@ -825,7 +841,7 @@ BOOL STORMAPI SNetGetNumPlayers(uint32_t* firstplayerid, uint32_t* lastplayerid,
   if (activeplayers) *activeplayers = 1;
 
   for (CONNREC* conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
-    if (conn->playerid == SNET_INVALIDPLAYERID) continue;
+    if (conn->playerid == NOPLAYER) continue;
 
     if (firstplayerid) *firstplayerid = std::min(s_api_playeroffset + conn->playerid, *firstplayerid);
     if (lastplayerid) *lastplayerid = std::max(s_api_playeroffset + conn->playerid, *lastplayerid);
@@ -849,7 +865,7 @@ BOOL STORMAPI SNetGetPlayerCaps(uint32_t playerid, SNETCAPSPTR caps) {
     return FALSE;
   }
 
-  if (s_game_playerid == SNET_INVALIDPLAYERID) {
+  if (s_game_playerid == NOPLAYER) {
     SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
     return FALSE;
   }
@@ -883,7 +899,7 @@ BOOL STORMAPI SNetGetPlayerName(uint32_t playerid, char* buffer, uint32_t buffer
     return FALSE;
   }
 
-  if (s_game_playerid == SNET_INVALIDPLAYERID) {
+  if (s_game_playerid == NOPLAYER) {
     SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
     return FALSE;
   }
@@ -931,7 +947,7 @@ BOOL STORMAPI SNetGetTurnsInTransit(uint32_t* turns) {
     return FALSE;
   }
 
-  if (s_game_playerid == SNET_INVALIDPLAYERID) {
+  if (s_game_playerid == NOPLAYER) {
     SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
     return FALSE;
   }
@@ -991,7 +1007,7 @@ BOOL STORMAPI SNetInitializeProvider(uint32_t providerid, SNETPROGRAMDATAPTR pro
   SEvtRegisterHandler('SNET', 2, 2, 0, (SEVTHANDLER)SysOnCircuitCheck);
   SEvtRegisterHandler('SNET', 2, 12, 0, (SEVTHANDLER)SysOnDropPlayer);
   SEvtRegisterHandler('SNET', 2, 14, 0, (SEVTHANDLER)SysOnNewGameMode);
-  //SEvtRegisterHandler('SNET', 2, 13, 0, (SEVTHANDLER)SysOnNewGameOwner);
+  SEvtRegisterHandler('SNET', 2, 13, 0, (SEVTHANDLER)SysOnNewGameOwner);
   SEvtRegisterHandler('SNET', 2, 15, 0, (SEVTHANDLER)SysOnNewLadderId);
   SEvtRegisterHandler('SNET', 2, 4, 0, (SEVTHANDLER)SysOnPing);
   SEvtRegisterHandler('SNET', 2, 5, 0, (SEVTHANDLER)SysOnPingResponse);
@@ -1160,7 +1176,7 @@ BOOL STORMAPI SNetDisconnectAll(uint32_t exitcode) {
     return FALSE;
   }
 
-  if (s_game_playerid == SNET_INVALIDPLAYERID) {
+  if (s_game_playerid == NOPLAYER) {
     SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
     return FALSE;
   }
