@@ -451,6 +451,20 @@ static int STORMAPI SMessageBox(HWND hWnd, const char* lpText, const char* lpCap
   return SDrawMessageBox(lpText, lpCaption, uType);
 }
 
+static uint32_t SysBuildPlayerInfo(SYSEVENTDATA_PLAYERINFOPTR data, CONNREC* conn, uint32_t startingturn) {
+  data->playerid = conn->playerid;
+  data->gameowner = conn->gameowner;
+  data->flags = conn->flags;
+  data->startingturn = startingturn;
+  data->addr = data->addr;
+
+  char* curr = data->namedesc;
+  curr += SStrCopy(curr, conn->name, SNETSPI_MAXSTRINGLENGTH) + 1;
+  curr += SStrCopy(curr, conn->desc, SNETSPI_MAXSTRINGLENGTH) + 1;
+  data->bytes = reinterpret_cast<uint8_t*>(curr) - reinterpret_cast<uint8_t*>(data);
+  return data->bytes;
+}
+
 static void STORMAPI SysOnCircuitCheck(SYSEVENTPTR event) {
   if (event->databytes == 4 && *static_cast<uint32_t*>(event->data) == 1) {
     //ConnSendMessage(ConnFindByAddr(event->senderaddr), 0, 3, event->data, 4);
