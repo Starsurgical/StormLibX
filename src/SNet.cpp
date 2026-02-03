@@ -31,6 +31,13 @@ caps.dat
   }[]; // repeats for the number of providers
 */
 
+#define  TYPE_SYSTEM                  0
+#define  TYPE_MESSAGE                 1
+#define  TYPE_TURN                    2
+#define  TYPE_DATAGRAM                3
+#define  TYPES                        4
+
+
 struct HEADER
 {
   uint16_t checksum;
@@ -70,16 +77,16 @@ struct CONNREC : TSLinkedNode<CONNREC>
   DWORD lastpingtime;
   DWORD latency;
   DWORD peaklatency;
-  STORM_LIST(MESSAGE) outgoingqueue[4];
-  STORM_LIST(MESSAGE) incomingqueue[4];
-  STORM_LIST(MESSAGE) processing[4];
+  STORM_LIST(MESSAGE) outgoingqueue[TYPES];
+  STORM_LIST(MESSAGE) incomingqueue[TYPES];
+  STORM_LIST(MESSAGE) processing[TYPES];
   STORM_LIST(MESSAGE) oldturns;
-  WORD outgoingsequence[4];
-  WORD incomingsequence[4];
+  WORD outgoingsequence[TYPES];
+  WORD incomingsequence[TYPES];
   WORD lastprocessedturn;
-  WORD availablesequence[4];
-  WORD acksequence[4];
-  DWORD acktime[4];
+  WORD availablesequence[TYPES];
+  WORD acksequence[TYPES];
+  DWORD acktime[TYPES];
   BOOL gameowner;
   BOOL establishing;
   DWORD exitcode;
@@ -295,7 +302,7 @@ static void ConnDestroyQueue(STORM_LIST(MESSAGE)* queue) {
 }
 
 static void ConnFree(CONNREC *conn) {
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < TYPES; i++) {
     ConnDestroyQueue(&conn->outgoingqueue[i]);
     ConnDestroyQueue(&conn->incomingqueue[i]);
     ConnDestroyQueue(&conn->processing[i]);
@@ -757,7 +764,7 @@ BOOL STORMAPI SNetGetTurnsInTransit(uint32_t* turns) {
     return FALSE;
   }
 
-  *turns = rec->outgoingsequence[2] - rec->incomingsequence[2];
+  *turns = rec->outgoingsequence[TYPE_TURN] - rec->incomingsequence[TYPE_TURN];
   return TRUE;
 }
 
@@ -982,7 +989,7 @@ BOOL STORMAPI SNetDisconnectAll(uint32_t flags) {
 
   for (CONNREC *conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
     conn->flags |= 8;
-    conn->unk = conn->incomingsequence[2];
+    conn->unk = conn->incomingsequence[TYPE_TURN];
     conn->finalsequence = flags;
   }
   return TRUE;
