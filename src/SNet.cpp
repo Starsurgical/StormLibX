@@ -285,6 +285,14 @@ static void GameSetPlayerName(unsigned int id, const char *name) {
   SStrCopy(s_game_playernames[id].name, name, sizeof(_PLAYERNAME::name));
 }
 
+static BOOL GameStartAdvertising() {
+  CLIENTDATA clientdata;
+  uint32_t clientdatabytes;
+  GameBuildClientData(&clientdata, &clientdatabytes);
+  uint32_t gameage = (PortGetTickCount() - s_game_creationtime) / 1000;
+  return s_spi->spiStartAdvertisingGame(s_game_gamename, s_game_gamepass, s_game_gamedesc, s_game_gamemode, gameage, s_game_categorybits, s_game_optcategorybits, s_game_ladderid, &clientdata, clientdatabytes);
+}
+
 static void ConnAssignPlayerId(CONNREC* conn, uint8_t playerid) {
   conn->oldplayerid = NOPLAYER;
   conn->playerid = playerid;

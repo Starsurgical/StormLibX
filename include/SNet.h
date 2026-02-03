@@ -264,7 +264,7 @@ typedef struct _SNETSPI {
   BOOL(STORMAPI* spiSendExternalMessage)(const char* senderpath, const char* sendername, const char* targetpath, const char* targetname, const char* message);
   // An extended version of spiStartAdvertisingGame
   // BOOL(STORMAPI* spiStartAdvertisingGame)(const char* gamename, const char* gamepassword, const char* gamedescription, uint32_t gamemode, uint32_t gameage, uint32_t gamecategorybits, uint32_t optcategorybits, LPCVOID clientdata, uint32_t clientdatabytes); <-- old
-  BOOL(STORMAPI* spiStartAdvertisingGame)(const char* gamename, const char* gamepassword, const char* gamedescription, uint32_t gamemode, uint32_t gameage, uint32_t gamecategorybits, uint32_t optcategorybits, uint32_t, LPCVOID clientdata, uint32_t clientdatabytes);
+  BOOL(STORMAPI* spiStartAdvertisingGame)(const char* gamename, const char* gamepassword, const char* gamedescription, uint32_t gamemode, uint32_t gameage, uint32_t gamecategorybits, uint32_t optcategorybits, uint32_t ladderid, LPCVOID clientdata, uint32_t clientdatabytes);
   // Called to stop advertising the game
   BOOL(STORMAPI* spiStopAdvertisingGame)();
   BOOL(STORMAPI* spiUnlockDeviceList)(SNETSPI_DEVICELISTPTR devicelist);
