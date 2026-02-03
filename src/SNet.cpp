@@ -1164,7 +1164,32 @@ BOOL STORMAPI SNetEnumGamesEx(uint32_t categorybits, uint32_t categorymask, SNET
 
 // @134
 BOOL STORMAPI SNetSendServerChatCommand(const char* command) {
-  return FALSE;
+  VALIDATEBEGIN;
+  VALIDATE(command);
+  VALIDATE(*command);
+  VALIDATEEND;
+
+  SCOPE_LOCK(s_api_critsect);
+
+  if (!s_spi) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  if (s_game_playerid == NOPLAYER) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  CONNREC* conn = ConnFindLocal();
+  if (!conn) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  char path[144];
+  std::snprintf(path, sizeof(path), "\\\\.\\game\\%s", s_game_gamename);
+  return s_spi->spiSendExternalMessage(path, conn->name, "", "", command);
 }
 
 // @137
