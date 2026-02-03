@@ -215,6 +215,8 @@ static PERFDATAREC s_perf_data[SNET_PERFIDNUM] = {
   { 0, SNET_PERFTYPE_COUNTER, -4, true },
 };
 
+static BOOL SpiSend(uint32_t addresses, SNETADDRPTR* addrlist, void* data, uint32_t databytes);
+
 static uint32_t PortGetTickCount() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
@@ -354,6 +356,25 @@ static void ConnFree(CONNREC *conn) {
   }
   ConnDestroyQueue(&conn->oldturns);
   delete conn;
+}
+
+static void ConnSendPacket(CONNREC* conn, PACKETPTR pkt) {
+  SNETADDRPTR addr = &conn->addr;
+  SpiSend(1, &addr, pkt, pkt->header.bytes);
+  conn->acksequence[pkt->header.type] = pkt->header.acksequence;
+  conn->acktime[pkt->header.type] = 0;
+}
+
+static void ConnResendMessage(CONNREC* conn, PACKETPTR data, uint32_t databytes) {
+  PACKETPTR localpkt = static_cast<PACKETPTR>(ALLOC(databytes));
+  SMemCopy(localpkt, data, databytes);
+
+  uint32_t bytes = localpkt->header.bytes;
+  localpkt->header.acksequence = conn->availablesequence[localpkt->header.type];
+  localpkt->header.checksum = PktGenerateChecksum(localpkt);
+
+  ConnSendPacket(conn, localpkt);
+  FREE(localpkt);
 }
 
 static void ConnDestroy() {
