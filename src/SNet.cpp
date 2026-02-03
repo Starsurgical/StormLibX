@@ -12,6 +12,7 @@
 #include <atomic>
 #include <chrono>
 #include <filesystem>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -36,6 +37,24 @@ caps.dat
 #define  TYPE_TURN                    2
 #define  TYPE_DATAGRAM                3
 #define  TYPES                        4
+
+#define SNET_PERFID_TURN 1
+#define SNET_PERFID_TURNSSENT 4
+#define SNET_PERFID_TURNSRECV 5
+#define SNET_PERFID_MSGSENT 6
+#define SNET_PERFID_MSGRECV 7
+#define SNET_PERFID_USERBYTESSENT 8
+#define SNET_PERFID_USERBYTESRECV 9
+#define SNET_PERFID_TOTALBYTESSENT 10
+#define SNET_PERFID_TOTALBYTESRECV 11
+#define SNET_PERFID_PKTSENTONWIRE 12
+#define SNET_PERFID_PKTRECVONWIRE 13
+#define SNET_PERFID_BYTESSENTONWIRE 14
+#define SNET_PERFID_BYTESRECVONWIRE 15
+#define SNET_PERFIDNUM 16
+
+#define SNET_PERFTYPE_COUNTER 0x10410400
+#define SNET_PERFTYPE_RAWCOUNT 0x00010000
 
 
 struct HEADER
@@ -131,7 +150,7 @@ struct SPI_SENDBUFFER {
 
 static uint32_t s_spi_outgoingtime;
 static bool s_spi_providersfound;
-static SPI_SENDBUFFER s_spi_sendbuffer;
+static std::unique_ptr<SPI_SENDBUFFER> s_spi_sendbuffer;
 
 static std::recursive_mutex s_api_critsect;
 static std::recursive_mutex s_sys_usereventlist_critsect;
@@ -169,6 +188,32 @@ static uint32_t s_game_playersallowed;
 static uint32_t s_game_programid;
 static uint32_t s_game_versionid;
 
+
+typedef struct _PERFDATAREC {
+  uint32_t value;
+  uint32_t type;
+  int32_t scale;
+  bool providerspecific;
+} PERFDATAREC, *PERFDATAPTR;
+
+static PERFDATAREC s_perf_data[SNET_PERFIDNUM] = {
+  {},
+  { 0, SNET_PERFTYPE_RAWCOUNT, -1, false },
+  {},
+  {},
+  { 0, SNET_PERFTYPE_COUNTER, -1, false },
+  { 0, SNET_PERFTYPE_COUNTER, -1, false },
+  { 0, SNET_PERFTYPE_COUNTER, -1, false },
+  { 0, SNET_PERFTYPE_COUNTER, -1, false },
+  { 0, SNET_PERFTYPE_COUNTER, -4, false },
+  { 0, SNET_PERFTYPE_COUNTER, -4, false },
+  { 0, SNET_PERFTYPE_COUNTER, -4, false },
+  { 0, SNET_PERFTYPE_COUNTER, -4, false },
+  { 0, SNET_PERFTYPE_COUNTER, -1, true },
+  { 0, SNET_PERFTYPE_COUNTER, -1, true },
+  { 0, SNET_PERFTYPE_COUNTER, -4, true },
+  { 0, SNET_PERFTYPE_COUNTER, -4, true },
+};
 
 static uint32_t PortGetTickCount() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
@@ -448,13 +493,9 @@ static void SpiDestroy(BOOL clearproviderlist) {
     s_spi = nullptr;
   }
 
-/*
   if (s_spi_sendbuffer) {
-    // TODO: VirtualUnlock, VirtualFree
-    s_spi_sendbuffer = nullptr;
+    s_spi_sendbuffer.reset();
   }
-*/
-  s_spi_sendbuffer = {};
 
   if (clearproviderlist) {
     s_spi_providerlist.clear();
@@ -523,6 +564,35 @@ static BOOL SpiNormalizeDataBlocks(
   *versiondataout = *versiondatain;
   versiondataout->size = sizeof(SNETVERSIONDATA);
   return TRUE;
+}
+
+static BOOL SpiSend(uint32_t addresses, SNETADDRPTR* addrlist, void* data, uint32_t databytes) {
+  if (!s_spi) return FALSE;
+
+  uint32_t currtime = PortGetTickCount();
+  if (currtime - s_spi_outgoingtime < std::numeric_limits<int32_t>::max()) {
+    s_spi_outgoingtime = currtime;
+  }
+  s_spi_outgoingtime += 1000 * addresses * (databytes + 64) / s_spi_providerptr->caps.bytessec;
+
+  if (s_spi_sendbuffer) {
+    if (addresses > 16 || databytes > sizeof(s_spi_sendbuffer->data)) {
+      return FALSE;
+    }
+
+    for (uint32_t i = 0; i < addresses; i++) {
+      s_spi_sendbuffer->addrptr[i] = &s_spi_sendbuffer->addr[i];
+    }
+
+    for (uint32_t i = 0; i < addresses; i++) {
+      s_spi_sendbuffer->addr[i] = *addrlist[i];
+    }
+
+    SMemCopy(s_spi_sendbuffer->data, data, databytes);
+    data = s_spi_sendbuffer->data;
+  }
+  s_perf_data[SNET_PERFID_TOTALBYTESSENT].value += databytes;
+  return s_spi->spiSend(addresses, addrlist, data, databytes);
 }
 
 static void RecvThreadProc() {
