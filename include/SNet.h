@@ -241,7 +241,7 @@ typedef struct _SNETSPI {
   BOOL(STORMAPI* spiDestroy)();
   // Called in order to free blocks of packet memory returned in the spiReceive functions
   BOOL(STORMAPI* spiFree)(SNETADDRPTR addr, void* data, uint32_t databytes);
-  BOOL(STORMAPI* spiFreeExternalMessage)(const char* addr, const char* data, const char* databytes); // TODO: possibly incorrect, investigate
+  BOOL(STORMAPI* spiFreeExternalMessage)(const char *senderpath, const char *sendername, const char *message);
   // Returns info on a specified game
   BOOL(STORMAPI* spiGetGameInfo)(uint32_t gameid, const char* gamename, const char* gamepassword, SNETSPI_GAMELIST* gameinfo);
   // Returns packet statistics
@@ -255,7 +255,7 @@ typedef struct _SNETSPI {
   // Return received data from a connectionless socket to storm
   BOOL(STORMAPI* spiReceive)(SNETADDRPTR* addr, void** data, uint32_t* databytes);
   // Return received data from a connected socket to storm
-  BOOL(STORMAPI* spiReceiveExternalMessage)(SNETADDRPTR* addr, void** data, uint32_t* databytes); // TODO: possibly incorrect, investigate
+  BOOL(STORMAPI* spiReceiveExternalMessage)(const char **senderpath, const char **sendername, const char **message);
   // Called when a game is selected to query information
   BOOL(STORMAPI* spiSelectGame)(uint32_t flags, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata, uint32_t* playerid);
   // Sends data over a connectionless socket

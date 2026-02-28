@@ -220,7 +220,7 @@ static STORM_LIST(USEREVENT) s_sys_usereventlist;
 static std::vector<_PLAYERNAME> s_game_playernames;
 static uint32_t s_game_categorybits;
 static uint32_t s_game_creationtime;
-static uint32_t s_game_initdata;
+static void* s_game_initdata;
 static uint32_t s_game_initdatabytes;
 static uint32_t s_game_gamemode;
 static char s_game_gamedesc[128];
@@ -259,6 +259,14 @@ static PERFDATAREC s_perf_data[SNET_PERFIDNUM] = {
   { 0, SNET_PERFTYPE_COUNTER, -4, true },
   { 0, SNET_PERFTYPE_COUNTER, -4, true },
 };
+
+static void PerfAdd(uint32_t id, int32_t value) {
+  s_perf_data[id].value += value;
+}
+
+static void PerfSet(uint32_t id, int32_t value) {
+  s_perf_data[id].value = value;
+}
 
 static BOOL SpiSend(uint32_t addresses, SNETADDRPTR* addrlist, void* data, uint32_t databytes);
 
@@ -408,6 +416,68 @@ static void ConnDestroyQueue(STORM_LIST(MESSAGE)* queue) {
   }
 }
 
+static void ConnSetCurrentMessage(CONNREC* conn, uint8_t type, MESSAGE* message) {
+  if (type == TYPE_TURN) {
+    conn->oldturns.LinkNode(message, STORM_LIST_TAIL, nullptr);
+    return;
+  }
+
+  if (!conn->processing[type].IsEmpty()) {
+    MESSAGE* processing = conn->processing[type].Head();
+    if (processing->local) {
+      PktFreeLocalMessage(processing->addr, processing->data);
+    }
+    else {
+      s_spi->spiFree(processing->addr, processing->data, processing->databytes);
+    }
+    conn->processing[type].DeleteNode(processing);
+  }
+  conn->processing[type].LinkNode(message, STORM_LIST_TAIL, nullptr);
+}
+
+static void ConnClearOldTurns(CONNREC* onlyconn) {
+  CONNREC* localptr = ConnFindLocal();
+  if (!localptr) return;
+
+  uint16_t sequence = localptr->incomingsequence[TYPE_TURN];
+  uint16_t acksequence = sequence;
+  for (CONNREC* conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
+    if (acksequence - conn->lastprocessedturn < INT16_MAX) {
+      acksequence = conn->lastprocessedturn;
+    }
+  }
+
+  for (int32_t local = 0; local <= 1; local++) {
+    CONNREC* connhead = local ? localptr : s_conn_connlist.Head();
+    for (CONNREC* conn = connhead; conn; conn = conn->Next()) {
+      if (onlyconn && conn != onlyconn) continue;
+
+      while (!conn->incomingqueue[TYPE_TURN].IsEmpty()) {
+        if (sequence == conn->incomingqueue[TYPE_TURN].Head()->data->header.sequence) break;
+        if (sequence - conn->incomingqueue[TYPE_TURN].Head()->data->header.sequence > INT16_MAX) break;
+
+        MESSAGE* message = conn->incomingqueue[TYPE_TURN].Head();
+        conn->incomingqueue[TYPE_TURN].UnlinkNode(message);
+        ConnSetCurrentMessage(conn, TYPE_TURN, message);
+      }
+
+      while(!conn->oldturns.IsEmpty()) {
+        if (acksequence == conn->oldturns.Head()->data->header.sequence) break;
+        if (acksequence - conn->oldturns.Head()->data->header.sequence > INT16_MAX) break;
+
+        MESSAGE* message = conn->oldturns.Head();
+        if (local) {
+          PktFreeLocalMessage(message->addr, message->data);
+        }
+        else {
+          s_spi->spiFree(message->addr, message->data, message->databytes);
+          conn->oldturns.DeleteNode(message);
+        }
+      }
+    }
+  }
+}
+
 static void ConnFree(CONNREC *conn) {
   for (int i = 0; i < TYPES; i++) {
     ConnDestroyQueue(&conn->outgoingqueue[i]);
@@ -425,6 +495,35 @@ static void ConnSendPacket(CONNREC* conn, PACKETPTR pkt) {
   conn->acktime[pkt->header.type] = 0;
 }
 
+static void ConnProcessAck(CONNREC* conn, uint8_t type, uint16_t acksequence) {
+  bool found = false;
+  while (!conn->outgoingqueue[type].IsEmpty()) {
+    if (acksequence == conn->outgoingqueue[type].Head()->data->header.sequence) break;
+    if (acksequence - conn->outgoingqueue[type].Head()->data->header.sequence > INT16_MAX) break;
+
+    found = true;
+    MESSAGE* message = conn->outgoingqueue[type].Head();
+    if (message->local) {
+      PktFreeLocalMessage(message->addr, message->data);
+    }
+    else if (s_spi) {
+      s_spi->spiFree(message->addr, message->data, message->databytes);
+    }
+    conn->outgoingqueue[type].DeleteNode(message);
+  }
+
+  if (type == TYPE_TURN) {
+    conn->lastprocessedturn = acksequence;
+  }
+
+  if (found && !conn->outgoingqueue[type].IsEmpty()) {
+    uint32_t currtime = PortGetTickCount();
+    if (currtime - conn->outgoingqueue[type].Head()->resendtime < INT32_MAX) {
+      conn->outgoingqueue[type].Head()->resendtime = currtime;
+    }
+  }
+}
+
 static void ConnResendMessage(CONNREC* conn, PACKETPTR data, uint32_t databytes) {
   PACKETPTR localpkt = static_cast<PACKETPTR>(ALLOC(databytes));
   SMemCopy(localpkt, data, databytes);
@@ -435,6 +534,73 @@ static void ConnResendMessage(CONNREC* conn, PACKETPTR data, uint32_t databytes)
 
   ConnSendPacket(conn, localpkt);
   FREE(localpkt);
+}
+
+static void PktAllocateLocalMessage(SNETADDRPTR* addr, PACKETPTR* data, uint32_t databytes) {
+  *addr = STORM_NEW(SNETADDR);
+  
+  databytes = databytes + (sizeof(intptr_t) - databytes % sizeof(intptr_t));
+  if (databytes < sizeof(intptr_t)) databytes = sizeof(intptr_t);
+  *data = static_cast<PACKETPTR>(ALLOC(databytes));
+}
+
+static MESSAGE* ConnSendMessage(CONNREC* target, uint8_t type, uint8_t subtype, void* data, uint32_t databytes) {
+  CONNREC* local = ConnFindLocal();
+  if (!local) return nullptr;
+
+  SNETADDRPTR pktaddr = nullptr;
+  PACKETPTR pkt = nullptr;
+  PktAllocateLocalMessage(&pktaddr, &pkt, databytes + sizeof(HEADER));
+  *pktaddr = target->addr;
+
+  pkt->header.bytes = databytes + sizeof(HEADER);
+  pkt->header.acksequence = target->availablesequence[type];
+  pkt->header.type = type;
+  pkt->header.subtype = subtype;
+  pkt->header.playerid = local->playerid;
+  pkt->header.flags = 0;
+
+  if (type == TYPE_SYSTEM && subtype == 1) {
+    pkt->header.sequence = 0;
+  }
+  else {
+    pkt->header.sequence = target->outgoingsequence[type]++;
+  }
+
+  if (data && databytes) {
+    memcpy(pkt->data, data, databytes);
+  }
+  pkt->header.checksum = PktGenerateChecksum(pkt);
+
+  MESSAGE* msg = nullptr;
+  if (target == local) {
+    msg = target->incomingqueue[type].NewNode(STORM_LIST_TAIL, 0, 0);
+  }
+  else if (type != TYPE_DATAGRAM) {
+    msg = target->outgoingqueue[type].NewNode(STORM_LIST_TAIL, 0, 0);
+  }
+
+  if (msg) {
+    msg->addr = pktaddr;
+    msg->data = pkt;
+    msg->databytes = databytes + sizeof(HEADER);
+    msg->local = true;
+    msg->sendtime = PortGetTickCount();
+  }
+
+  if (target != local) {
+    ConnSendPacket(target, pkt);
+    PerfAdd(SNET_PERFID_USERBYTESSENT, databytes);
+  }
+
+  if (msg) {
+    msg->resendtime = s_spi_outgoingtime;
+  }
+  else {
+    delete pktaddr;
+    FREE(pkt);
+  }
+  return msg;
 }
 
 static void ConnDestroy() {
@@ -467,7 +633,7 @@ static uint32_t SysBuildPlayerInfo(SYSEVENTDATA_PLAYERINFOPTR data, CONNREC* con
 
 static void STORMAPI SysOnCircuitCheck(SYSEVENTPTR event) {
   if (event->databytes == 4 && *static_cast<uint32_t*>(event->data) == 1) {
-    //ConnSendMessage(ConnFindByAddr(event->senderaddr), 0, 3, event->data, 4);
+    ConnSendMessage(ConnFindByAddr(event->senderaddr), TYPE_SYSTEM, 3, event->data, 4);
   }
 }
 
@@ -501,7 +667,7 @@ static void STORMAPI SysOnNewGameOwner(SYSEVENTPTR event) {
 }
 
 static void STORMAPI SysOnPing(SYSEVENTPTR event) {
-  //ConnSendMessage(ConnFindByAddr(event->senderaddr), 0, 5, event->data, event->databytes);
+  ConnSendMessage(ConnFindByAddr(event->senderaddr), TYPE_SYSTEM, 5, event->data, event->databytes);
 }
 
 static void STORMAPI SysOnPingResponse(SYSEVENTPTR event) {
@@ -513,10 +679,59 @@ static void STORMAPI SysOnPingResponse(SYSEVENTPTR event) {
   }
 }
 
-struct MSG_PLYR_LEAVE {
-  uint16_t field_0;
-  uint32_t seq;
-};
+static void SysQueueUserEvent(uint32_t eventid, uint32_t playerid, const void* data, uint32_t databytes) {
+  USEREVENT* userevent = s_sys_usereventlist.NewNode(0, 0, 0);
+  userevent->event.eventid = eventid;
+  userevent->event.playerid = playerid;
+
+  if (data && databytes) {
+    userevent->event.data = ALLOC(databytes);
+    SMemCopy(userevent->event.data, const_cast<void*>(data), databytes);
+    userevent->event.databytes = databytes;
+  }
+
+  SCOPE_LOCK(s_sys_usereventlist_critsect);
+
+  s_sys_usereventlist.LinkNode(userevent, STORM_LIST_LINK_BEFORE, nullptr);
+}
+
+static void STORMAPI SysOnPlayerJoinAcceptDone(SYSEVENTPTR event) {
+  CONNREC* conn = ConnFindLocal();
+  if (conn) {
+    s_game_playerid = conn->playerid;
+  }
+
+  FREEPTRIFUSED(s_game_initdata);
+  s_game_initdatabytes = 0;
+
+  if (event->data && event->databytes != 0) {
+    s_game_initdata = ALLOC(event->databytes);
+    s_game_initdatabytes = event->databytes;
+    SMemCopy(s_game_initdata, event->data, s_game_initdatabytes);
+    SysQueueUserEvent(1, s_game_playerid, s_game_initdata, s_game_initdatabytes);
+  }
+}
+
+static void STORMAPI SysOnPlayerJoinAcceptStart(SYSEVENTPTR event) {
+  SYSEVENTDATA_PLAYERJOIN_ACCEPTSTARTPTR eventdataptr = static_cast<SYSEVENTDATA_PLAYERJOIN_ACCEPTSTARTPTR>(event->data);
+  CONNREC* conn = ConnFindLocal();
+  if (conn) {
+    ConnAssignPlayerId(conn, eventdataptr->playerid);
+    conn->incomingsequence[TYPE_TURN] = eventdataptr->nextturn;
+    conn->availablesequence[TYPE_TURN] = eventdataptr->nextturn;
+    conn->outgoingsequence[TYPE_TURN] = eventdataptr->nextturn;
+    PerfSet(SNET_PERFID_TURN, eventdataptr->nextturn);
+  }
+
+  s_game_playersallowed = eventdataptr->playersallowed;
+  s_game_gamemode = eventdataptr->gamemode;
+  s_game_creationtime = PortGetTickCount() - 1000 * eventdataptr->runningtime;
+  
+  char* currptr = eventdataptr->namedescpass;
+  currptr += SStrCopy(s_game_gamename, currptr, SNETSPI_MAXSTRINGLENGTH) + 1;
+  currptr += SStrCopy(s_game_gamedesc, currptr, SNETSPI_MAXSTRINGLENGTH) + 1;
+  currptr += SStrCopy(s_game_gamepass, currptr, SNETSPI_MAXSTRINGLENGTH) + 1;
+}
 
 static void STORMAPI SysOnPlayerLeave(SYSEVENTPTR event) {
   SYSEVENTDATA_PLAYERLEAVEPTR msg = static_cast<SYSEVENTDATA_PLAYERLEAVEPTR>(event->data);
@@ -563,22 +778,6 @@ static void SysDispatchUserEvents() {
     FREEIFUSED(curr->event.data);
     delete curr;
   }
-}
-
-static void SysQueueUserEvent(uint32_t eventid, uint32_t playerid, void* data, uint32_t databytes) {
-  USEREVENT* userevent = s_sys_usereventlist.NewNode(0, 0, 0);
-  userevent->event.eventid = eventid;
-  userevent->event.playerid = playerid;
-
-  if (data && databytes) {
-    userevent->event.data = ALLOC(databytes);
-    SMemCopy(userevent->event.data, data, databytes);
-    userevent->event.databytes = databytes;
-  }
-
-  SCOPE_LOCK(s_sys_usereventlist_critsect);
-
-  s_sys_usereventlist.LinkNode(userevent, STORM_LIST_LINK_BEFORE, nullptr);
 }
 
 static int SpiCheckProviderOrder(PROVIDERINFO* first, PROVIDERINFO* second) {
@@ -710,8 +909,26 @@ static BOOL SpiSend(uint32_t addresses, SNETADDRPTR* addrlist, void* data, uint3
     SMemCopy(s_spi_sendbuffer->data, data, databytes);
     data = s_spi_sendbuffer->data;
   }
-  s_perf_data[SNET_PERFID_TOTALBYTESSENT].value += databytes;
+  PerfAdd(SNET_PERFID_TOTALBYTESSENT, databytes);
   return s_spi->spiSend(addresses, addrlist, data, databytes);
+}
+
+static void RecvProcessExternalMessages() {
+  const char* senderpath = nullptr;
+  const char* sendername = nullptr;
+  const char* message = nullptr;
+  while (s_spi->spiReceiveExternalMessage(&senderpath, &sendername, &message)) {
+    if (!senderpath || !sendername || !message) break;
+
+    if (!senderpath[0] && !sendername[0]) {
+      SysQueueUserEvent(4, -1, message, SStrLen(message) + 1);
+    }
+
+    s_spi->spiFreeExternalMessage(senderpath, sendername, message);
+    senderpath = nullptr;
+    sendername = nullptr;
+    message = nullptr;
+  }
 }
 
 static void RecvThreadProc() {
@@ -725,7 +942,7 @@ static void RecvThreadProc() {
     if (!s_spi) break;
 
     if (v2) {
-      //RecvProcessExternalMessages();
+      RecvProcessExternalMessages();
       //RecvProcessIncomingPackets();
     }
 
@@ -1035,8 +1252,8 @@ BOOL STORMAPI SNetInitializeProvider(uint32_t providerid, SNETPROGRAMDATAPTR pro
   SEvtRegisterHandler('SNET', 2, 5, 0, (SEVTHANDLER)SysOnPingResponse);
   //SEvtRegisterHandler('SNET', 2, 6, 0, (SEVTHANDLER)SysOnPlayerInfo);
   //SEvtRegisterHandler('SNET', 2, 7, 0, (SEVTHANDLER)SysOnPlayerJoin);
-  //SEvtRegisterHandler('SNET', 2, 8, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptStart);
-  //SEvtRegisterHandler('SNET', 2, 9, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptDone);
+  SEvtRegisterHandler('SNET', 2, 8, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptStart);
+  SEvtRegisterHandler('SNET', 2, 9, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptDone);
   SEvtRegisterHandler('SNET', 2, 10, 0, (SEVTHANDLER)SysOnPlayerJoinReject);
   SEvtRegisterHandler('SNET', 2, 11, 0, (SEVTHANDLER)SysOnPlayerLeave);
 
