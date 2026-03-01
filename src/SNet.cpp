@@ -251,7 +251,7 @@ static uint32_t s_game_versionid;
 
 
 typedef struct _PERFDATAREC {
-  uint32_t value;
+  std::atomic_uint32_t value;
   uint32_t type;
   int32_t scale;
   bool providerspecific;
@@ -278,6 +278,10 @@ static PERFDATAREC s_perf_data[SNET_PERFIDNUM] = {
 
 static void PerfAdd(uint32_t id, int32_t value) {
   s_perf_data[id].value += value;
+}
+
+static void PerfIncrement(uint32_t id) {
+  s_perf_data[id].value++;
 }
 
 static void PerfSet(uint32_t id, int32_t value) {
@@ -1379,7 +1383,38 @@ BOOL STORMAPI SNetSendMessage(uint32_t targetplayerid, void* data, uint32_t data
 
 // @128
 BOOL STORMAPI SNetSendTurn(void* data, uint32_t databytes) {
-  return FALSE;
+  VALIDATEBEGIN;
+  VALIDATE(data);
+  VALIDATE(databytes);
+  VALIDATEEND;
+
+  SCOPE_LOCK(s_api_critsect);
+
+  if (!s_spi) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  if (s_game_playerid == NOPLAYER) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  CONNREC* local = ConnFindLocal();
+  if (!local) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  for (CONNREC* conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
+    if (conn->playerid != NOPLAYER && conn->outgoingsequence[TYPE_TURN] == local->outgoingsequence[TYPE_TURN]) {
+      ConnSendMessage(conn, TYPE_TURN, 0, data, databytes);
+    }
+  }
+  ConnSendMessage(local, TYPE_TURN, 0, data, databytes);
+  PerfIncrement(SNET_PERFID_TURNSSENT);
+  SetEvent(s_recv_event);
+  return TRUE;
 }
 
 // @129
