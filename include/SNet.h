@@ -364,7 +364,7 @@ extern "C" {
   BOOL STORMAPI SNetSetBasePlayer(int playerid);
 
   // @130
-  BOOL STORMAPI SNetSetGameMode(uint32_t modeflags);
+  BOOL STORMAPI SNetSetGameMode(uint32_t modeflags, int32_t makepublic);
 
   // @131
   BOOL STORMAPI SNetUnregisterEventHandler(uint32_t eventid, SNETEVENTPROC callback);

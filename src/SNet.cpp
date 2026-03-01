@@ -40,6 +40,22 @@ caps.dat
 #define TYPE_DATAGRAM 3
 #define TYPES 4
 
+#define SYS_UNUSED 0
+#define SYS_INITIALCONTACT 1
+#define SYS_CIRCUITCHECK 2
+#define SYS_CIRCUITCHECKRESPONSE 3
+#define SYS_PING 4
+#define SYS_PINGRESPONSE 5
+#define SYS_PLAYERINFO 6
+#define SYS_PLAYERJOIN 7
+#define SYS_PLAYERJOIN_ACCEPTSTART 8
+#define SYS_PLAYERJOIN_ACCEPTDONE 9
+#define SYS_PLAYERJOIN_REJECT 10
+#define SYS_PLAYERLEAVE 11
+#define SYS_DROPPLAYER 12
+#define SYS_NEWGAMEOWNER 13
+#define SYS_GAMEMODE 14
+
 #define PF_JOINING 0x00000004
 #define PF_LEAVING 0x00000008
 
@@ -632,8 +648,8 @@ static uint32_t SysBuildPlayerInfo(SYSEVENTDATA_PLAYERINFOPTR data, CONNREC* con
 }
 
 static void STORMAPI SysOnCircuitCheck(SYSEVENTPTR event) {
-  if (event->databytes == 4 && *static_cast<uint32_t*>(event->data) == 1) {
-    ConnSendMessage(ConnFindByAddr(event->senderaddr), TYPE_SYSTEM, 3, event->data, 4);
+  if (event->databytes == sizeof(uint32_t) && *static_cast<uint32_t*>(event->data) == 1) {
+    ConnSendMessage(ConnFindByAddr(event->senderaddr), TYPE_SYSTEM, SYS_CIRCUITCHECKRESPONSE, event->data, 4);
   }
 }
 
@@ -667,7 +683,7 @@ static void STORMAPI SysOnNewGameOwner(SYSEVENTPTR event) {
 }
 
 static void STORMAPI SysOnPing(SYSEVENTPTR event) {
-  ConnSendMessage(ConnFindByAddr(event->senderaddr), TYPE_SYSTEM, 5, event->data, event->databytes);
+  ConnSendMessage(ConnFindByAddr(event->senderaddr), TYPE_SYSTEM, SYS_PINGRESPONSE, event->data, event->databytes);
 }
 
 static void STORMAPI SysOnPingResponse(SYSEVENTPTR event) {
@@ -1374,7 +1390,45 @@ BOOL STORMAPI SNetSetBasePlayer(int playerid) {
 }
 
 // @130
-BOOL STORMAPI SNetSetGameMode(uint32_t modeflags) {
+BOOL STORMAPI SNetSetGameMode(uint32_t modeflags, int32_t makepublic) {
+  SCOPE_LOCK(s_api_critsect);
+
+  if (!s_spi) {
+    SErrSetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+  }
+
+  if (s_game_playerid == NOPLAYER) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  CONNREC* local = ConnFindLocal();
+  if (!local || !local->gameowner) {
+    SErrSetLastError(ERROR_NOT_OWNER);
+    return FALSE;
+  }
+
+  if (makepublic) {
+    modeflags &= ~SNET_GM_PRIVATE;
+    s_game_gamepass[0] = '\0';
+  }
+
+  if (modeflags == s_game_gamemode) {
+    return TRUE;
+  }
+
+  s_game_gamemode = modeflags;
+  for (CONNREC* checkconn = s_conn_connlist.Head(); checkconn; checkconn = checkconn->Next()) {
+    if (checkconn->playerid != NOPLAYER) {
+      ConnSendMessage(checkconn, TYPE_SYSTEM, SYS_GAMEMODE, &s_game_gamemode, sizeof(s_game_gamemode));
+    }
+  }
+
+  if (GameStartAdvertising()) {
+    return TRUE;
+  }
+
   return FALSE;
 }
 
