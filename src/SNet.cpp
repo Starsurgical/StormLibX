@@ -1378,7 +1378,54 @@ BOOL STORMAPI SNetSelectGame(uint32_t flags, SNETPROGRAMDATAPTR programdata, SNE
 
 // @127
 BOOL STORMAPI SNetSendMessage(uint32_t targetplayerid, void* data, uint32_t databytes) {
-  return FALSE;
+  VALIDATEBEGIN;
+  VALIDATE(data);
+  VALIDATE(databytes);
+  VALIDATEEND;
+
+  {
+    SCOPE_LOCK(s_api_critsect);
+
+    if (!s_spi) {
+      SErrSetLastError(ERROR_BAD_PROVIDER);
+      return FALSE;
+    }
+
+    if (s_game_playerid == NOPLAYER) {
+      SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+      return FALSE;
+    }
+
+    if (targetplayerid != SNET_BROADCASTNONLOCALPLAYERID && targetplayerid != SNET_BROADCASTPLAYERID) {
+      targetplayerid -= s_api_playeroffset;
+    }
+
+    if (targetplayerid != SNET_BROADCASTNONLOCALPLAYERID && targetplayerid != SNET_BROADCASTPLAYERID) {
+      CONNREC* target = ConnFindByPlayerId(targetplayerid);
+      if (!target) {
+        SErrSetLastError(STORM_ERROR_INVALID_PLAYER);
+        return FALSE;
+      }
+      ConnSendMessage(target, TYPE_MESSAGE, 0, data, databytes);
+    }
+    else {
+      for (CONNREC* conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
+        if (conn->playerid != NOPLAYER) {
+          ConnSendMessage(conn, TYPE_MESSAGE, 0, data, databytes);
+        }
+      }
+
+      if (targetplayerid == SNET_BROADCASTPLAYERID) {
+        CONNREC* local = ConnFindLocal();
+        if (local) {
+          ConnSendMessage(local, TYPE_MESSAGE, 0, data, databytes);
+        }
+      }
+    }
+    PerfIncrement(SNET_PERFID_MSGSENT);
+  }
+  SetEvent(s_recv_event);
+  return TRUE;
 }
 
 // @128
@@ -1388,31 +1435,33 @@ BOOL STORMAPI SNetSendTurn(void* data, uint32_t databytes) {
   VALIDATE(databytes);
   VALIDATEEND;
 
-  SCOPE_LOCK(s_api_critsect);
+  {
+    SCOPE_LOCK(s_api_critsect);
 
-  if (!s_spi) {
-    SErrSetLastError(ERROR_BAD_PROVIDER);
-    return FALSE;
-  }
-
-  if (s_game_playerid == NOPLAYER) {
-    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
-    return FALSE;
-  }
-
-  CONNREC* local = ConnFindLocal();
-  if (!local) {
-    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
-    return FALSE;
-  }
-
-  for (CONNREC* conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
-    if (conn->playerid != NOPLAYER && conn->outgoingsequence[TYPE_TURN] == local->outgoingsequence[TYPE_TURN]) {
-      ConnSendMessage(conn, TYPE_TURN, 0, data, databytes);
+    if (!s_spi) {
+      SErrSetLastError(ERROR_BAD_PROVIDER);
+      return FALSE;
     }
+
+    if (s_game_playerid == NOPLAYER) {
+      SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+      return FALSE;
+    }
+
+    CONNREC* local = ConnFindLocal();
+    if (!local) {
+      SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+      return FALSE;
+    }
+
+    for (CONNREC* conn = s_conn_connlist.Head(); conn; conn = conn->Next()) {
+      if (conn->playerid != NOPLAYER && conn->outgoingsequence[TYPE_TURN] == local->outgoingsequence[TYPE_TURN]) {
+        ConnSendMessage(conn, TYPE_TURN, 0, data, databytes);
+      }
+    }
+    ConnSendMessage(local, TYPE_TURN, 0, data, databytes);
+    PerfIncrement(SNET_PERFID_TURNSSENT);
   }
-  ConnSendMessage(local, TYPE_TURN, 0, data, databytes);
-  PerfIncrement(SNET_PERFID_TURNSSENT);
   SetEvent(s_recv_event);
   return TRUE;
 }
