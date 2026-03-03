@@ -63,6 +63,7 @@
 #define SNET_PS_NOTRESPONDING  3
 #define SNET_PS_UNKNOWN        default
 
+#define NOPLAYER 0xFF
 
 //###########################################################################
 //## Types
@@ -141,6 +142,12 @@ typedef struct _SNETVERSIONDATA {
   const char* originalarchivefile;
   const char* patcharchivefile;
 } SNETVERSIONDATA, * SNETVERSIONDATAPTR;
+
+typedef struct _CLIENTDATA {
+  uint32_t bytes;
+  uint32_t numplayers;
+  uint32_t maxplayers;
+} CLIENTDATA, *CLIENTDATAPTR;
 
 
 typedef struct _SNETUIDATA *SNETUIDATAPTR;
@@ -264,7 +271,7 @@ typedef struct _SNETSPI {
   BOOL(STORMAPI* spiSendExternalMessage)(const char* senderpath, const char* sendername, const char* targetpath, const char* targetname, const char* message);
   // An extended version of spiStartAdvertisingGame
   // BOOL(STORMAPI* spiStartAdvertisingGame)(const char* gamename, const char* gamepassword, const char* gamedescription, uint32_t gamemode, uint32_t gameage, uint32_t gamecategorybits, uint32_t optcategorybits, LPCVOID clientdata, uint32_t clientdatabytes); <-- old
-  BOOL(STORMAPI* spiStartAdvertisingGame)(const char* gamename, const char* gamepassword, const char* gamedescription, uint32_t gamemode, uint32_t gameage, uint32_t gamecategorybits, uint32_t optcategorybits, uint32_t ladderid, LPCVOID clientdata, uint32_t clientdatabytes);
+  BOOL(STORMAPI* spiStartAdvertisingGame)(const char* gamename, const char* gamepassword, const char* gamedescription, uint32_t gamemode, uint32_t gameage, uint32_t gamecategorybits, uint32_t optcategorybits, uint32_t ladderid, CLIENTDATAPTR clientdata, uint32_t clientdatabytes);
   // Called to stop advertising the game
   BOOL(STORMAPI* spiStopAdvertisingGame)();
   BOOL(STORMAPI* spiUnlockDeviceList)(SNETSPI_DEVICELISTPTR devicelist);
@@ -388,7 +395,7 @@ extern "C" {
   BOOL STORMAPI SNetCheckDataFile(const char* filename, uint8_t* data, uint32_t bytes, uint32_t* extendedresult);
 
   // @141
-  BOOL STORMAPI SNetSendLeagueCommand(LPCTSTR cmd, SNETLEAGUECMDRESULTPROC callback);
+  BOOL STORMAPI SNetSendLeagueCommand(const char* cmd, SNETLEAGUECMDRESULTPROC callback);
 
   // @142
   int STORMAPI SNetSendReplayPath(const char* replaypath, uint32_t gameid, const char* textgameresult);
