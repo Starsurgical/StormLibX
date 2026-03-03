@@ -56,8 +56,14 @@ caps.dat
 #define SYS_NEWGAMEOWNER 13
 #define SYS_GAMEMODE 14
 
-#define PF_JOINING 0x00000004
-#define PF_LEAVING 0x00000008
+#define SYSMSGS 16
+
+#define MF_ACK 1
+#define MF_RESENDREQUEST 2
+#define MF_FORWARDED 4
+
+#define PF_JOINING 4
+#define PF_LEAVING 8
 
 #define SNET_PERFID_TURN 1
 #define SNET_PERFID_TURNSSENT 4
@@ -217,13 +223,18 @@ static std::recursive_mutex s_api_critsect;
 static std::recursive_mutex s_sys_usereventlist_critsect;
 
 static void* s_spi_lib;
-static SNETSPIPTR s_spi;
+static std::unique_ptr<SNETSPI> s_spi;
 static std::vector<PROVIDERINFO> s_spi_providerlist;
 static PROVIDERINFO* s_spi_providerptr;
 static uint32_t s_api_playeroffset;
 
 static CODEVERIFYPROC s_CodeSignFunc;
 
+static uint32_t s_spi_timetoackturn = 250;
+static uint32_t s_spi_timetoblock = 5000;
+static uint32_t s_spi_timetogiveup = 1000;
+static uint32_t s_spi_timetorequest = 25;
+static uint32_t s_spi_timetoresend = 50;
 static uint8_t s_game_playerid = NOPLAYER;
 static std::thread s_recv_thread;
 static std::atomic_bool s_recv_shutdown;
@@ -248,6 +259,8 @@ static uint32_t s_game_optcategorybits;
 static uint32_t s_game_playersallowed;
 static uint32_t s_game_programid;
 static uint32_t s_game_versionid;
+
+static bool s_sys_event[SYSMSGS];
 
 
 typedef struct _PERFDATAREC {
@@ -292,6 +305,22 @@ static BOOL SpiSend(uint32_t addresses, SNETADDRPTR* addrlist, void* data, uint3
 
 static uint32_t PortGetTickCount() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+static void PortSleep(uint32_t time) {
+  std::this_thread::sleep_for(std::chrono::milliseconds(time));
+}
+
+void* PortLoadLibrary(const char* filename) {
+  return SDL_LoadObject(filename);
+}
+
+void PortFreeLibrary(void* object) {
+  SDL_UnloadObject(object);
+}
+
+void* PortGetProcAddress(void* object, const char* procname) {
+  return SDL_LoadFunction(object, procname);
 }
 
 static void GameBuildClientData(CLIENTDATAPTR buffer, uint32_t* bytes) {
@@ -623,6 +652,103 @@ static MESSAGE* ConnSendMessage(CONNREC* target, uint8_t type, uint8_t subtype, 
   return msg;
 }
 
+static uint32_t ConnMaintainConnections() {
+  uint32_t currtime = PortGetTickCount();
+  uint32_t wait = INFINITE;
+  CONNREC* local = ConnFindLocal();
+  if (!local) return wait;
+
+  CONNREC* next;
+  for (CONNREC* conn = s_conn_connlist.Head(); conn; conn = next) {
+    next = conn->Next();
+
+    if (conn->playerid == NOPLAYER && currtime - conn->lastreceivetime >= 50000) {
+      ConnFree(conn);
+      continue;
+    }
+
+    if (conn->playerid == NOPLAYER && !conn->establishing) continue;
+
+    if (currtime - conn->lastpingtime >= 20000 && !conn->establishing) {
+      conn->lastpingtime = currtime;
+      ConnSendMessage(conn, TYPE_SYSTEM, SYS_PING, nullptr, 0);
+    }
+
+    for (int32_t type = 0; type < TYPES; type++) {
+      if (type == TYPE_DATAGRAM) continue;
+
+      uint16_t lastsequence = conn->incomingsequence[type] - 1;
+      for (MESSAGE* message = conn->incomingqueue[type].Head(); message; message = message->Next()) {
+        if (message->data->header.sequence - lastsequence > 1) {
+          if (message->resendtime && static_cast<int32_t>(s_spi_timetoresend + message->resendtime - currtime) > 0) {
+            wait = std::min(wait, s_spi_timetoresend + message->resendtime - currtime);
+          }
+          else {
+            message->resendtime = currtime;
+            
+            PACKET pkt;
+            pkt.header.checksum = 0;
+            pkt.header.bytes = sizeof(HEADER);
+            pkt.header.sequence = lastsequence + 1;
+            pkt.header.acksequence = conn->availablesequence[type];
+            pkt.header.type = type;
+            pkt.header.subtype = 0;
+            pkt.header.playerid = local->playerid;
+            pkt.header.flags = MF_RESENDREQUEST;
+            pkt.header.checksum = PktGenerateChecksum(&pkt);
+            ConnSendPacket(conn, &pkt);
+          }
+        }
+        lastsequence = message->data->header.sequence;
+      }
+    }
+
+    for (int32_t type = 0; type < TYPES; type++) {
+      if (conn->outgoingqueue[type].IsEmpty()) continue;
+      if (type == TYPE_TURN || type == TYPE_DATAGRAM) continue;
+
+      MESSAGE* message = conn->outgoingqueue[type].Head();
+      uint32_t bandwidth = s_spi_providerptr->caps.bytessec;
+      uint32_t maxpacket = s_spi_providerptr->caps.maxmessagesize;
+      uint32_t totaldata = message->databytes + maxpacket + 128;
+      uint32_t responsetime = 1000 * totaldata / bandwidth + 2 * s_spi_timetoresend + 200;
+      if (message->resendtime && static_cast<int32_t>(responsetime + message->resendtime - currtime) > 0) {
+        wait = std::min(wait, responsetime + message->resendtime - currtime);
+      }
+      else {
+        message->resendtime = currtime;
+        ConnResendMessage(conn, message->data, message->databytes);
+      }
+    }
+
+    for (int32_t type = 0; type < TYPES; type++) {
+      if (type == TYPE_DATAGRAM) continue;
+      uint32_t acktime = type == TYPE_TURN ? s_spi_timetoackturn : s_spi_timetorequest;
+
+      if (conn->acksequence[type] == conn->availablesequence[type]) continue;
+      if (conn->acktime[type] == 0) continue;
+
+      if (static_cast<int32_t>(acktime + conn->acktime[type] - currtime) > 0) {
+        wait = std::min(wait, acktime + conn->acktime[type] - currtime);
+      }
+      else {
+        PACKET pkt;
+        pkt.header.checksum = 0;
+        pkt.header.bytes = sizeof(HEADER);
+        pkt.header.sequence = conn->availablesequence[type];
+        pkt.header.acksequence = conn->availablesequence[type];
+        pkt.header.type = type;
+        pkt.header.subtype = 0;
+        pkt.header.playerid = local->playerid;
+        pkt.header.flags = MF_ACK;
+        pkt.header.checksum = PktGenerateChecksum(&pkt);
+        ConnSendPacket(conn, &pkt);
+      }
+    }
+  }
+  return wait;
+}
+
 static void ConnDestroy() {
   while (CONNREC* curr = s_conn_local.Head()) {
     ConnFree(curr);
@@ -800,6 +926,50 @@ static void SysDispatchUserEvents() {
   }
 }
 
+static void RecvProcessExternalMessages() {
+  const char* senderpath = nullptr;
+  const char* sendername = nullptr;
+  const char* message = nullptr;
+  while (s_spi->spiReceiveExternalMessage(&senderpath, &sendername, &message)) {
+    if (!senderpath || !sendername || !message) break;
+
+    if (!senderpath[0] && !sendername[0]) {
+      SysQueueUserEvent(4, -1, message, SStrLen(message) + 1);
+    }
+
+    s_spi->spiFreeExternalMessage(senderpath, sendername, message);
+    senderpath = nullptr;
+    sendername = nullptr;
+    message = nullptr;
+  }
+}
+
+static int32_t SysWaitForMultipleEvents(uint32_t numevents, uint32_t* eventlist, int32_t waitforall, uint32_t timeout) {
+  SMemZero(s_sys_event, sizeof(s_sys_event));
+  uint32_t starttime = PortGetTickCount();
+  bool firstiter = true;
+  do {
+    if (!firstiter) PortSleep(10);
+    firstiter = false;
+
+    RecvProcessExternalMessages();
+    //RecvProcessIncomingPackets();
+    ConnMaintainConnections();
+
+    uint32_t signalled = 0;
+    for (uint32_t i = 0; i < numevents; i++) {
+      if (eventlist[i] < SYSMSGS && s_sys_event[eventlist[i]]) {
+        signalled++;
+      }
+    }
+
+    if (signalled >= numevents || signalled && !waitforall) {
+      return true;
+    }
+  } while(timeout == INFINITE || PortGetTickCount() - starttime < timeout);
+  return false;
+}
+
 static int SpiCheckProviderOrder(PROVIDERINFO* first, PROVIDERINFO* second) {
   static const uint32_t baseorder[] = {'BNET', 'IPXN', 'IPXW', 'MODM', 'SCBL', 'MSDP'};
   int firstindex, secondindex;
@@ -822,24 +992,68 @@ static void SpiDestroy(BOOL clearproviderlist) {
   }
 
   if (s_spi_lib) {
-    SDL_UnloadObject(s_spi_lib);
+    PortFreeLibrary(s_spi_lib);
     s_spi_lib = nullptr;
   }
 
-  if (s_spi) {
-    delete s_spi;
-    s_spi = nullptr;
-  }
-
-  if (s_spi_sendbuffer) {
-    s_spi_sendbuffer.reset();
-  }
+  s_spi.reset();
+  s_spi_sendbuffer.reset();
 
   if (clearproviderlist) {
     s_spi_providerlist.clear();
     s_spi_providersfound = false;
   }
   s_spi_providerptr = nullptr;
+}
+
+static bool SpiDestroyWithError(uint32_t errorcode) {
+  SpiDestroy(false);
+  SErrSetLastError(errorcode);
+  return false;
+}
+
+static int32_t SpiInitialize(uint32_t providerid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata, void* recvevent) {
+  SpiDestroy(false);
+  //SpiFindAllProviders();
+  s_spi_providerptr = nullptr;
+  for (PROVIDERINFO& provider : s_spi_providerlist) {
+    if (provider.id == providerid) {
+      s_spi_providerptr = &provider;
+      break;
+    }
+  }
+
+  if (!s_spi_providerptr) return SpiDestroyWithError(ERROR_BAD_PROVIDER);
+
+  s_spi_timetoackturn = std::max(5 * s_spi_providerptr->caps.latencyms, 250u);
+  s_spi_timetoblock = std::max(12 * s_spi_providerptr->caps.latencyms, 5000u);
+  s_spi_timetogiveup = std::max(4 * s_spi_providerptr->caps.latencyms, 1000u);
+  s_spi_timetorequest = std::max(s_spi_providerptr->caps.latencyms / 2, 25u);
+  s_spi_timetoresend = std::max(s_spi_providerptr->caps.latencyms, 50u);
+  
+  if (s_spi_providerptr->caps.flags & SNET_CAPS_PAGELOCKEDBUFFERS) {
+    s_spi_sendbuffer.reset(new SPI_SENDBUFFER{ 0 });
+    if (!s_spi_sendbuffer) return SpiDestroyWithError(ERROR_NOT_ENOUGH_MEMORY);
+    //VirtualLock(s_spi_sendbuffer.get(), sizeof(SPI_SENDBUFFER));
+  }
+
+  s_spi_lib = PortLoadLibrary(s_spi_providerptr->filename);
+  if (!s_spi_lib) return SpiDestroyWithError(ERROR_BAD_PROVIDER);
+
+  SNETSPIBIND bind = static_cast<SNETSPIBIND>(PortGetProcAddress(s_spi_lib, "SnpBind"));
+  if (!bind) return SpiDestroyWithError(ERROR_BAD_PROVIDER);
+
+  SNETSPIPTR returnedspi = nullptr;
+  bind(s_spi_providerptr->index, &returnedspi);
+  if (!returnedspi || returnedspi->size < 80) return SpiDestroyWithError(ERROR_BAD_PROVIDER);
+
+  s_spi.reset(new SNETSPI{});
+  SMemCopy(s_spi.get(), returnedspi, std::min(static_cast<uint32_t>(sizeof(SNETSPI)), returnedspi->size));
+
+  if (!s_spi->spiInitialize(programdata, playerdata, interfacedata, versiondata, recvevent)) {
+    return SpiDestroyWithError(SErrGetLastError());
+  }
+  return true;
 }
 
 static void* SpiLoadCapsSignature(const char* filename) {
@@ -933,24 +1147,6 @@ static BOOL SpiSend(uint32_t addresses, SNETADDRPTR* addrlist, void* data, uint3
   return s_spi->spiSend(addresses, addrlist, data, databytes);
 }
 
-static void RecvProcessExternalMessages() {
-  const char* senderpath = nullptr;
-  const char* sendername = nullptr;
-  const char* message = nullptr;
-  while (s_spi->spiReceiveExternalMessage(&senderpath, &sendername, &message)) {
-    if (!senderpath || !sendername || !message) break;
-
-    if (!senderpath[0] && !sendername[0]) {
-      SysQueueUserEvent(4, -1, message, SStrLen(message) + 1);
-    }
-
-    s_spi->spiFreeExternalMessage(senderpath, sendername, message);
-    senderpath = nullptr;
-    sendername = nullptr;
-    message = nullptr;
-  }
-}
-
 static void RecvThreadProc() {
   int timeout = -1;
   while (!s_recv_shutdown) {
@@ -966,7 +1162,7 @@ static void RecvThreadProc() {
       //RecvProcessIncomingPackets();
     }
 
-    //timeout = ConnMaintainConnections();
+    timeout = ConnMaintainConnections();
   }
 }
 
@@ -1283,7 +1479,7 @@ BOOL STORMAPI SNetInitializeProvider(uint32_t providerid, SNETPROGRAMDATAPTR pro
     return FALSE;
   }
 
-  /*if (!SpiInitialize(providerid, &nprogramdata, &nplayerdata, &nuidata, &nversiondata, hEvent))*/ {
+  if (!SpiInitialize(providerid, &nprogramdata, &nplayerdata, &nuidata, &nversiondata, hEvent)) {
     return FALSE;
   }
 
