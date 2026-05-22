@@ -112,7 +112,43 @@ BOOL STORMAPI SNetEnumProviders(SNETCAPSPTR mincaps, SNETENUMPROVIDERSPROC callb
 
 // @106
 BOOL STORMAPI SNetDropPlayer(uint32_t playerid, uint32_t exitcode) {
-  return FALSE;
+  SCOPE_LOCK(s_api_critsect);
+
+  if (!s_spi) {
+    SErrSetLastError(ERROR_BAD_PROVIDER);
+    return FALSE;
+  }
+
+  if (playerid == NOPLAYER || playerid == s_game_playerid) {
+    SErrSetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+  }
+
+  if (s_game_playerid == NOPLAYER) {
+    SErrSetLastError(STORM_ERROR_NOT_IN_GAME);
+    return FALSE;
+  }
+
+  CONNREC *conn = ConnFindByPlayerId(playerid);
+  if (!conn) {
+    SErrSetLastError(STORM_ERROR_INVALID_PLAYER);
+    return FALSE;
+  }
+
+  conn->flags |= PF_LEAVING;
+  conn->finalsequence = conn->incomingsequence[TYPE_TURN];
+  conn->exitcode = exitcode;
+
+  for (CONNREC *checkconn = s_conn_connlist.Head(); checkconn; checkconn = checkconn->Next()) {
+    if (checkconn != conn && checkconn->playerid != NOPLAYER) {
+      SYSEVENTDATA_DROPPLAYER eventdata;
+      eventdata.playerid = playerid;
+      eventdata.finalsequence = conn->incomingsequence[TYPE_TURN];
+      eventdata.exitcode = exitcode;
+      ConnSendMessage(checkconn, TYPE_SYSTEM, SYS_DROPPLAYER, &eventdata, sizeof(eventdata));
+    }
+  }
+  return TRUE;
 }
 
 // @107
