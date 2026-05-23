@@ -4,10 +4,12 @@
 #include <Storm/List.hpp>
 #include <Storm/String.hpp>
 #include <SMem.h>
+
 #include "Conn.hpp"
 #include "Game.hpp"
 #include "Perf.hpp"
 #include "Recv.hpp"
+#include "Spi.hpp"
 #include "Win.hpp"
 
 #include <mutex>
@@ -134,6 +136,30 @@ void STORMAPI SysOnPlayerInfo(SYSEVENTPTR event) {
 
   if (s_game_playerid != NOPLAYER && conn && !(conn->flags & PF_JOINING)) {
     SysQueueUserEvent(2, eventdataptr->playerid, nullptr, 0);
+  }
+}
+
+void SysProcessIncomingMessages(CONNREC* conn) {
+  while (!conn->incomingqueue->IsEmpty()) {
+    MESSAGE* message = conn->incomingqueue->Head();
+    if (message->data->header.sequence != conn->incomingsequence[TYPE_SYSTEM]) break;
+
+    PACKETPTR data = message->data;
+    if (data->header.subtype < SYSMSGS) {
+      s_sys_event[data->header.subtype] = 1;
+    }
+
+    SYSEVENT eventdata;
+    eventdata.senderplayerid = data->header.playerid;
+    eventdata.senderaddr = message->addr;
+    eventdata.data = data->data;
+    eventdata.eventid = data->header.subtype;
+    eventdata.databytes = data->header.bytes - sizeof(HEADER);
+    SEvtDispatch('SNET', 2, data->header.subtype, &eventdata);
+    conn->incomingsequence[TYPE_SYSTEM]++;
+
+    s_spi->spiFree(message->addr, message->data, message->databytes);
+    conn->incomingqueue->DeleteNode(message);
   }
 }
 

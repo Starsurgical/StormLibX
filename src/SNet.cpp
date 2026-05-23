@@ -342,19 +342,19 @@ BOOL STORMAPI SNetInitializeProvider(uint32_t providerid, SNETPROGRAMDATAPTR pro
   SEvtUnregisterType('SNET', 1);
   SEvtUnregisterType('SNET', 2);
 
-  SEvtRegisterHandler('SNET', 2, 2, 0, (SEVTHANDLER)SysOnCircuitCheck);
-  SEvtRegisterHandler('SNET', 2, 12, 0, (SEVTHANDLER)SysOnDropPlayer);
-  SEvtRegisterHandler('SNET', 2, 14, 0, (SEVTHANDLER)SysOnNewGameMode);
-  SEvtRegisterHandler('SNET', 2, 13, 0, (SEVTHANDLER)SysOnNewGameOwner);
-  SEvtRegisterHandler('SNET', 2, 15, 0, (SEVTHANDLER)SysOnNewLadderId);
-  SEvtRegisterHandler('SNET', 2, 4, 0, (SEVTHANDLER)SysOnPing);
-  SEvtRegisterHandler('SNET', 2, 5, 0, (SEVTHANDLER)SysOnPingResponse);
-  SEvtRegisterHandler('SNET', 2, 6, 0, (SEVTHANDLER)SysOnPlayerInfo);
-  //SEvtRegisterHandler('SNET', 2, 7, 0, (SEVTHANDLER)SysOnPlayerJoin);
-  SEvtRegisterHandler('SNET', 2, 8, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptStart);
-  SEvtRegisterHandler('SNET', 2, 9, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptDone);
-  SEvtRegisterHandler('SNET', 2, 10, 0, (SEVTHANDLER)SysOnPlayerJoinReject);
-  SEvtRegisterHandler('SNET', 2, 11, 0, (SEVTHANDLER)SysOnPlayerLeave);
+  SEvtRegisterHandler('SNET', 2, SYS_CIRCUITCHECK, 0, (SEVTHANDLER)SysOnCircuitCheck);
+  SEvtRegisterHandler('SNET', 2, SYS_DROPPLAYER, 0, (SEVTHANDLER)SysOnDropPlayer);
+  SEvtRegisterHandler('SNET', 2, SYS_GAMEMODE, 0, (SEVTHANDLER)SysOnNewGameMode);
+  SEvtRegisterHandler('SNET', 2, SYS_NEWGAMEOWNER, 0, (SEVTHANDLER)SysOnNewGameOwner);
+  SEvtRegisterHandler('SNET', 2, SYS_NEWLADDERID, 0, (SEVTHANDLER)SysOnNewLadderId);
+  SEvtRegisterHandler('SNET', 2, SYS_PING, 0, (SEVTHANDLER)SysOnPing);
+  SEvtRegisterHandler('SNET', 2, SYS_PINGRESPONSE, 0, (SEVTHANDLER)SysOnPingResponse);
+  SEvtRegisterHandler('SNET', 2, SYS_PLAYERINFO, 0, (SEVTHANDLER)SysOnPlayerInfo);
+  //SEvtRegisterHandler('SNET', 2, SYS_PLAYERJOIN, 0, (SEVTHANDLER)SysOnPlayerJoin);
+  SEvtRegisterHandler('SNET', 2, SYS_PLAYERJOIN_ACCEPTSTART, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptStart);
+  SEvtRegisterHandler('SNET', 2, SYS_PLAYERJOIN_ACCEPTDONE, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptDone);
+  SEvtRegisterHandler('SNET', 2, SYS_PLAYERJOIN_REJECT, 0, (SEVTHANDLER)SysOnPlayerJoinReject);
+  SEvtRegisterHandler('SNET', 2, SYS_PLAYERLEAVE, 0, (SEVTHANDLER)SysOnPlayerLeave);
 
   HANDLE hEvent = NULL;
   if (!RecvInitialize(&hEvent)) {
