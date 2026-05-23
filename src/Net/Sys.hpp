@@ -59,12 +59,14 @@ void STORMAPI SysOnNewGameMode(SYSEVENTPTR event);
 void STORMAPI SysOnNewGameOwner(SYSEVENTPTR event);
 void STORMAPI SysOnPing(SYSEVENTPTR event);
 void STORMAPI SysOnPingResponse(SYSEVENTPTR event);
-void SysQueueUserEvent(uint32_t eventid, uint32_t playerid, const void* data, uint32_t databytes);
+void STORMAPI SysOnPlayerInfo(SYSEVENTPTR event);
 void STORMAPI SysOnPlayerJoinAcceptDone(SYSEVENTPTR event);
 void STORMAPI SysOnPlayerJoinAcceptStart(SYSEVENTPTR event);
 void STORMAPI SysOnPlayerLeave(SYSEVENTPTR event);
 void STORMAPI SysOnNewLadderId(SYSEVENTPTR event);
 void STORMAPI SysOnPlayerJoinReject(SYSEVENTPTR event);
+
+void SysQueueUserEvent(uint32_t eventid, uint32_t playerid, const void* data, uint32_t databytes);
 void SysDestroy();
 void SysDispatchUserEvents();
 int32_t SysWaitForMultipleEvents(uint32_t numevents, uint32_t* eventlist, int32_t waitforall, uint32_t timeout);

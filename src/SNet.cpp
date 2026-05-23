@@ -349,7 +349,7 @@ BOOL STORMAPI SNetInitializeProvider(uint32_t providerid, SNETPROGRAMDATAPTR pro
   SEvtRegisterHandler('SNET', 2, 15, 0, (SEVTHANDLER)SysOnNewLadderId);
   SEvtRegisterHandler('SNET', 2, 4, 0, (SEVTHANDLER)SysOnPing);
   SEvtRegisterHandler('SNET', 2, 5, 0, (SEVTHANDLER)SysOnPingResponse);
-  //SEvtRegisterHandler('SNET', 2, 6, 0, (SEVTHANDLER)SysOnPlayerInfo);
+  SEvtRegisterHandler('SNET', 2, 6, 0, (SEVTHANDLER)SysOnPlayerInfo);
   //SEvtRegisterHandler('SNET', 2, 7, 0, (SEVTHANDLER)SysOnPlayerJoin);
   SEvtRegisterHandler('SNET', 2, 8, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptStart);
   SEvtRegisterHandler('SNET', 2, 9, 0, (SEVTHANDLER)SysOnPlayerJoinAcceptDone);

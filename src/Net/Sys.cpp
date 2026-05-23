@@ -87,6 +87,56 @@ void STORMAPI SysOnPingResponse(SYSEVENTPTR event) {
   }
 }
 
+void STORMAPI SysOnPlayerInfo(SYSEVENTPTR event) {
+  SYSEVENTDATA_PLAYERINFOPTR eventdataptr = static_cast<SYSEVENTDATA_PLAYERINFOPTR>(event->data);
+  SNETADDRPTR addr = &eventdataptr->addr;
+
+  if (eventdataptr->playerid == event->senderplayerid) {
+    addr = event->senderaddr;
+  }
+  else {
+    ConnFree(ConnFindByAddr(addr));
+  }
+
+  CONNREC* conn = ConnFindByAddr(addr);
+  CONNREC* local = ConnFindLocal();
+
+  if (conn && local) {
+    ConnAssignPlayerId(conn, eventdataptr->playerid);
+    conn->flags = eventdataptr->flags;
+    conn->gameowner = eventdataptr->gameowner;
+    conn->incomingsequence[TYPE_TURN] = eventdataptr->startingturn;
+    conn->availablesequence[TYPE_TURN] = eventdataptr->startingturn;
+    conn->outgoingsequence[TYPE_TURN] = local->outgoingsequence[TYPE_TURN];
+
+    if (conn->incomingsequence[TYPE_TURN] != local->incomingsequence[TYPE_TURN] && uint16_t(conn->incomingsequence[TYPE_TURN] - local->incomingsequence[TYPE_TURN]) < INT16_MAX) {
+      conn->flags |= PF_JOINING;
+    }
+
+    conn->addr = *addr;
+    SStrCopy(conn->name, eventdataptr->namedesc, sizeof(conn->name));
+    SStrCopy(conn->desc, &eventdataptr->namedesc[SStrLen(eventdataptr->namedesc) + 1], sizeof(conn->desc));
+  }
+  
+  GameSetPlayerName(eventdataptr->playerid, eventdataptr->namedesc);
+  
+  for (MESSAGE* currmsg = local->oldturns.Head(); currmsg; currmsg = currmsg->Next()) {
+    if (uint16_t(currmsg->data->header.sequence - uint16_t(eventdataptr->startingturn)) <= INT16_MAX) {
+      ConnResendMessage(conn, currmsg->data, currmsg->databytes);
+    }
+  }
+  
+  for (MESSAGE* currmsg = local->incomingqueue[TYPE_TURN].Head(); currmsg; currmsg = currmsg->Next()) {
+    if (uint16_t(currmsg->data->header.sequence - uint16_t(eventdataptr->startingturn)) <= INT16_MAX) {
+      ConnResendMessage(conn, currmsg->data, currmsg->databytes);
+    }
+  }
+
+  if (s_game_playerid != NOPLAYER && conn && !(conn->flags & PF_JOINING)) {
+    SysQueueUserEvent(2, eventdataptr->playerid, nullptr, 0);
+  }
+}
+
 void SysQueueUserEvent(uint32_t eventid, uint32_t playerid, const void* data, uint32_t databytes) {
   USEREVENT* userevent = s_sys_usereventlist.NewNode(0, 0, 0);
   userevent->event.eventid = eventid;
