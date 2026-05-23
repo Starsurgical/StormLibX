@@ -1,12 +1,15 @@
 #include "Spi.hpp"
+#include <algorithm>
+#include <filesystem>
 #include <memory>
 #include <vector>
 
-#include <SFile.h>
 #include <SDraw.h>
+#include <SFile.h>
 #include <SMem.h>
 
 #include "Perf.hpp"
+#include "Pkt.hpp"
 #include "Win.hpp"
 
 uint32_t s_spi_outgoingtime;
@@ -71,9 +74,97 @@ bool SpiDestroyWithError(uint32_t errorcode) {
   return false;
 }
 
+void* SpiExtractCaps(void* capssig, uint32_t* id, const char** desc, const char** req, SNETCAPSPTR* caps) {
+  STORM_VALIDATE_BEGIN;
+  STORM_VALIDATE(capssig);
+  STORM_VALIDATE_END;
+
+  uint32_t bytes = *static_cast<uint32_t*>(capssig);
+  char* start = static_cast<char*>(capssig) + sizeof(bytes);
+  char* curr = start;
+
+  *id = *reinterpret_cast<uint32_t*>(curr);
+  curr += sizeof(id);
+
+  *desc = curr;
+  curr += SStrLen(curr) + 1;
+
+  *req = curr;
+  curr += SStrLen(curr) + 1;
+
+  *caps = reinterpret_cast<SNETCAPSPTR>(curr);
+  curr += (*caps)->size;
+
+  if (curr - start != bytes) return nullptr;
+  return curr;
+}
+
+void SpiFindAllProviders() {
+  if (s_spi_providersfound) return;
+  s_spi_providersfound = true;
+
+  char basepath[MAX_PATH] = {};
+  SFileGetInstallPath(basepath, sizeof(basepath), true);
+
+  char filespec[256 + 1] = {};
+  for (auto& file : std::filesystem::directory_iterator(basepath)) {
+    auto filepath = file.path();
+    if (filepath.extension() != ".snp") continue;
+
+    std::string filepathstr = filepath.string();
+    void* capssig = SpiLoadCapsSignature(filepathstr.c_str());
+    if (!capssig) continue;
+
+    void* lib = PortLoadLibrary(filepathstr.c_str());
+    if (!lib) {
+      FREE(capssig);
+      continue;
+    }
+
+    SNETSPIQUERY query = (SNETSPIQUERY)PortGetProcAddress(lib, "SnpQuery");
+    if (!query) {
+      FREE(capssig);
+      PortFreeLibrary(lib);
+      continue;
+    }
+
+    void* currcapssig = capssig;
+    for (uint32_t index = 0; ; index++) {
+      uint32_t id = 0;
+      const char* desc = nullptr;
+      const char* req = nullptr;
+      SNETCAPSPTR caps = nullptr;
+
+      if (!query(index, &id, &desc, &req, &caps)) {
+        break;
+      }
+      if (!caps || caps->size < sizeof(SNETCAPS) || (caps->flags & SNET_CAPS_DEBUGONLY)) {
+        break;
+      }
+
+      currcapssig = SpiExtractCaps(currcapssig, &id, &desc, &req, &caps);
+      if (!currcapssig || caps->size < sizeof(SNETCAPS)) break;
+
+      PROVIDERINFO info = {};
+      SStrCopy(info.filename, filepathstr.c_str(), sizeof(info.filename));
+      info.index = index;
+      info.id = id;
+      if (desc) SStrCopy(info.desc, desc, sizeof(info.desc));
+      if (req) SStrCopy(info.req, req, sizeof(info.req));
+      info.caps = *caps;
+      info.caps.maxmessagesize -= sizeof(HEADER) + sizeof(uint32_t);
+
+      s_spi_providerlist.emplace_back(info);
+    }
+    PortFreeLibrary(lib);
+    FREE(capssig);
+  }
+  std::sort(std::begin(s_spi_providerlist), std::end(s_spi_providerlist), SpiCheckProviderOrder);
+}
+
 int32_t SpiInitialize(uint32_t providerid, SNETPROGRAMDATAPTR programdata, SNETPLAYERDATAPTR playerdata, SNETUIDATAPTR interfacedata, SNETVERSIONDATAPTR versiondata, void* recvevent) {
   SpiDestroy(false);
-  //SpiFindAllProviders();
+  SpiFindAllProviders();
   s_spi_providerptr = nullptr;
   for (PROVIDERINFO& provider : s_spi_providerlist) {
     if (provider.id == providerid) {

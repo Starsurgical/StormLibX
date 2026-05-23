@@ -288,8 +288,8 @@ typedef struct _SNETSPI {
   BOOL(STORMAPI* spiGetReplyName)(const char* buffer, uint32_t buffersize);
 } SNETSPI, *SNETSPIPTR;
 
-typedef BOOL(STORMAPI* SNETSPIBIND)(uint32_t, SNETSPIPTR*);
-typedef BOOL(STORMAPI* SNETSPIQUERY)(uint32_t, uint32_t*, const char**, const char**, SNETCAPSPTR*);
+typedef BOOL(STORMAPI* SNETSPIBIND)(uint32_t index, SNETSPIPTR* spi);
+typedef BOOL(STORMAPI* SNETSPIQUERY)(uint32_t index, uint32_t* id, const char** description, const char** requirements, SNETCAPSPTR* caps);
 
 
 //###########################################################################

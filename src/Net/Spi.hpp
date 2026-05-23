@@ -8,8 +8,6 @@
 struct PROVIDERINFO {
   char     filename[MAX_PATH];
   uint32_t index;
-  uint32_t field_20C;
-  uint32_t field_210;
   uint32_t id;
   char     desc[SNETSPI_MAXSTRINGLENGTH];
   char     req[SNETSPI_MAXSTRINGLENGTH];
